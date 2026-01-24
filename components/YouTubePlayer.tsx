@@ -20,8 +20,13 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, isVisible, isUnm
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
+    console.log("DEBUG: YouTubePlayer mounting...");
     const initPlayer = () => {
-      if (!window.YT) return;
+      if (!window.YT) {
+        console.log("DEBUG: window.YT not available yet");
+        return;
+      }
+      console.log("DEBUG: Initializing YT.Player for videoId:", videoId);
       
       playerRef.current = new window.YT.Player('yt-player', {
         height: '100%',
@@ -39,8 +44,16 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, isVisible, isUnm
         },
         events: {
           onReady: (event: any) => {
+            console.log("DEBUG: YT.Player onReady event");
             setIsInitialized(true);
             if (onReady) onReady();
+          },
+          onStateChange: (event: any) => {
+            console.log("DEBUG: YT.Player State Change:", event.data);
+            // event.data: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (video cued)
+          },
+          onError: (event: any) => {
+            console.error("DEBUG: YT.Player Error:", event.data);
           }
         }
       });
@@ -49,10 +62,12 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, isVisible, isUnm
     if (window.YT && window.YT.Player) {
       initPlayer();
     } else {
+      console.log("DEBUG: Waiting for YouTube IFrame API script to load...");
       window.onYouTubeIframeAPIReady = initPlayer;
     }
 
     return () => {
+      console.log("DEBUG: YouTubePlayer unmounting, destroying player");
       if (playerRef.current) {
         playerRef.current.destroy();
       }
@@ -61,23 +76,28 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, isVisible, isUnm
 
   useEffect(() => {
     if (isInitialized && videoId) {
+      console.log("DEBUG: VideoId changed or initialized, loading video:", videoId);
       playerRef.current.loadVideoById({
         videoId: videoId,
         startSeconds: 15,
         suggestedQuality: 'hd720'
       });
       // Ensure it starts playing muted
+      console.log("DEBUG: Setting muted and playing video");
       playerRef.current.mute();
       playerRef.current.playVideo();
     }
   }, [isInitialized, videoId]);
 
   useEffect(() => {
+    console.log("DEBUG: isUnmuted change:", isUnmuted);
     if (isInitialized && isUnmuted && playerRef.current) {
+      console.log("DEBUG: Unmuting and playing at 100% volume");
       playerRef.current.unMute();
       playerRef.current.setVolume(100);
       playerRef.current.playVideo();
     } else if (isInitialized && !isUnmuted && playerRef.current) {
+      console.log("DEBUG: Muting player");
       playerRef.current.mute();
     }
   }, [isInitialized, isUnmuted]);

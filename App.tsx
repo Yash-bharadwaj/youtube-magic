@@ -41,27 +41,37 @@ const App: React.FC = () => {
 
   // Room Listener
   useEffect(() => {
-    if (!roomId) return;
+    if (!roomId) {
+      console.log("DEBUG: No roomId found yet.");
+      return;
+    }
+    console.log(`DEBUG: Subscribing to room: ${roomId}`);
     const unsubscribe = subscribeToRoom(roomId, (newState) => {
+      console.log("DEBUG: Room State Update Received:", newState);
       setRoomState(newState);
       
       // Sync state with Firestore
       if (newState.status === 'revealed') {
+        console.log("DEBUG: Status changed to REVEALED");
         setState(AppState.REVEAL);
       } else if (newState.status === 'armed') {
+        console.log("DEBUG: Status changed to ARMED");
         // When magician arms the room (by opening notes), spectator goes to loading screen
         if (userRole !== 'PERFORMER' && state === AppState.WELCOME) {
+          console.log("DEBUG: Moving spectator to MUTE_CHECK");
           setState(AppState.MUTE_CHECK);
         }
       } else if (newState.status === 'idle') {
+        console.log("DEBUG: Status changed to IDLE");
         // Only reset if we were in a reveal/waiting state
         if (state === AppState.REVEAL || state === AppState.WAITING_FOR_FLIP) {
+          console.log("DEBUG: Reloading page for reset");
           window.location.reload();
         }
       }
     });
     return () => unsubscribe();
-  }, [roomId]);
+  }, [roomId, userRole, state]);
 
   // Gesture Detection (3-finger tap)
   useEffect(() => {
@@ -153,31 +163,38 @@ const App: React.FC = () => {
   }, []);
 
   const handleNotesDone = async (text: string) => {
+    console.log("DEBUG: handleNotesDone called with text:", text);
     if (userRole === 'PERFORMER' && text.trim()) {
       // Magician flow: Search and send to room
       try {
         const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
+        console.log("DEBUG: Searching YouTube for:", text);
         const response = await fetch(
           `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(text)}&type=video&maxResults=1&key=${apiKey}`
         );
         const data = await response.json();
+        console.log("DEBUG: YouTube Search Results:", data);
         if (data.items && data.items[0]) {
           const videoId = data.items[0].id.videoId;
+          console.log("DEBUG: Found Video ID:", videoId);
           const { setRoomVideo, revealVideo } = await import('./services/firestoreService');
           
           // 1. Send the video ID to the room and reveal immediately
           // The video will start playing from 15 seconds as requested
+          console.log(`DEBUG: Updating Firestore room ${roomId} with video ${videoId}`);
           await setRoomVideo(roomId, videoId, 15);
           await revealVideo(roomId);
 
           setState(AppState.WELCOME); // Return to capture tool
+        } else {
+          console.log("DEBUG: No video items found in search results");
         }
       } catch (error) {
-        console.error("Search error:", error);
+        console.error("DEBUG: Search error:", error);
         setState(AppState.WELCOME);
       }
     } else {
-      // Spectator flow (if notes were used)
+      console.log("DEBUG: Non-performer or empty text, moving to WAITING_FOR_FLIP");
       setState(AppState.WAITING_FOR_FLIP);
     }
   };
