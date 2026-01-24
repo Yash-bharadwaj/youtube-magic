@@ -24,9 +24,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       const trimmedUsername = username.trim().toLowerCase();
       const trimmedPassword = password.trim();
       
-      console.log("Attempting login for:", trimmedUsername);
-      console.log("Entered password length:", trimmedPassword.length);
-      
       const user = performers.find(p => {
         const dbUsername = p.username.trim().toLowerCase();
         const dbPassword = (p as any).password || '';
@@ -34,16 +31,14 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       });
       
       if (user) {
-        console.log("✅ Match found! Role:", user.role || 'PERFORMER');
         onLogin(user);
       } else if (username === 'admin' && password === 'admin') {
         onLogin({ username: 'admin', role: 'ADMIN', slug: 'admin-room' });
       } else {
-        console.log("❌ No match found in", performers.length, "performers");
         setError('Invalid credentials or system offline.');
       }
     } catch (err) {
-      console.error("Login error details:", err);
+      console.error("Login error:", err);
       setError('Connection failure.');
     } finally {
       setIsLoading(false);

@@ -31,49 +31,37 @@ const App: React.FC = () => {
   useEffect(() => {
     const path = window.location.pathname.replace(/^\/|\/$/g, '');
     const id = path || 'default';
-    console.log(`DEBUG: URL Path detected: "${path}", Setting Room ID to: "${id}"`);
     setRoomId(id);
     
     // If we are on a room URL, skip login and act as spectator
     if (path && path !== 'login' && path !== 'admin') {
-      console.log("DEBUG: Spectator mode detected, moving to WELCOME");
       setState(AppState.WELCOME);
     }
   }, []);
 
   // Room Listener
   useEffect(() => {
-    if (!roomId) {
-      console.log("DEBUG: No roomId found yet.");
-      return;
-    }
-    console.log(`DEBUG: Subscribing to room: ${roomId}`);
+    if (!roomId) return;
+    
     const unsubscribe = subscribeToRoom(roomId, (newState) => {
-      console.log("DEBUG: Room State Update Received:", newState);
       setRoomState(newState);
       
       // Sync state with Firestore - BUT ONLY FOR SPECTATORS
       // If we are a performer, we don't want our own phone to trigger the reveal UI
       if (userRole === 'PERFORMER') {
-        console.log("DEBUG: Performer role detected, ignoring remote state transition");
         return;
       }
 
       if (newState.status === 'revealed') {
-        console.log("DEBUG: Status changed to REVEALED");
         setState(AppState.REVEAL);
       } else if (newState.status === 'armed') {
-        console.log("DEBUG: Status changed to ARMED");
         // When magician arms the room (by opening notes), spectator goes to loading screen
         if (userRole !== 'PERFORMER' && state === AppState.WELCOME) {
-          console.log("DEBUG: Moving spectator to MUTE_CHECK");
           setState(AppState.MUTE_CHECK);
         }
       } else if (newState.status === 'idle') {
-        console.log("DEBUG: Status changed to IDLE");
         // Only reset if we were in a reveal/waiting state
         if (state === AppState.REVEAL || state === AppState.WAITING_FOR_FLIP) {
-          console.log("DEBUG: Reloading page for reset");
           window.location.reload();
         }
       }
@@ -126,9 +114,7 @@ const App: React.FC = () => {
 
   // Flip detection for reveal (If magician armed the room)
   useEffect(() => {
-    console.log(`DEBUG: Flip detection - state: ${state}, isReadyForReveal: ${isReadyForReveal}, isFaceDown: ${isFaceDown}, roomStatus: ${roomState?.status}`);
     if (state === AppState.WAITING_FOR_FLIP && isReadyForReveal && !isFaceDown && roomState?.status === 'revealed') {
-      console.log("DEBUG: ALL CONDITIONS MET - Moving to REVEAL and unmuting!");
       setState(AppState.REVEAL);
       setIsUnmuted(true);
     }
@@ -136,17 +122,14 @@ const App: React.FC = () => {
 
   const handleLogin = (user: any) => {
     const role = (user.role || 'PERFORMER') as UserRole;
-    console.log("App handleLogin called with role:", role);
     setUserRole(role);
     
     // If it's a performer, set the roomId to their specific slug
     if (role === 'PERFORMER' && user.slug) {
-      console.log(`Setting Room ID for Performer: ${user.slug}`);
       setRoomId(user.slug);
     }
 
     if (role === 'ADMIN') {
-      console.log("Switching to Admin Dashboard state");
       setState(AppState.ADMIN_DASHBOARD);
     } else {
       setState(AppState.WELCOME);
@@ -181,74 +164,56 @@ const App: React.FC = () => {
   }, []);
 
   const handleNotesDone = async (text: string) => {
-    console.log("DEBUG: handleNotesDone called with text:", text);
     if (userRole === 'PERFORMER' && text.trim()) {
       // Magician flow: Search and send to room
       try {
         const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
-        console.log("DEBUG: Searching YouTube for:", text);
         const response = await fetch(
           `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(text)}&type=video&videoEmbeddable=true&maxResults=1&key=${apiKey}`
         );
         const data = await response.json();
-        console.log("DEBUG: YouTube Search Results:", data);
+        
         if (data.items && data.items[0]) {
           const videoId = data.items[0].id.videoId;
-          console.log("DEBUG: Found Video ID:", videoId);
           const { setRoomVideo, revealVideo } = await import('./services/firestoreService');
           
-          // 1. Send the video ID to the room and reveal immediately
-          // The video will start playing from 15 seconds as requested
-          console.log(`DEBUG: Updating Firestore room ${roomId} with video ${videoId}`);
           await setRoomVideo(roomId, videoId, 15);
           await revealVideo(roomId);
 
-          setState(AppState.WELCOME); // Return to capture tool
-        } else {
-          console.log("DEBUG: No video items found in search results");
+          setState(AppState.WELCOME);
         }
       } catch (error) {
-        console.error("DEBUG: Search error:", error);
+        console.error("YouTube search error:", error);
         setState(AppState.WELCOME);
       }
     } else {
-      console.log("DEBUG: Non-performer or empty text, moving to WAITING_FOR_FLIP");
       setState(AppState.WAITING_FOR_FLIP);
     }
   };
 
   const startApp = () => {
-    console.log("DEBUG: startApp() called - Spectator clicked YouTube icon");
     setIsInitializing(true);
     // Request permission for orientation if needed (iOS)
     if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
       (DeviceOrientationEvent as any).requestPermission()
         .then((permissionState: string) => {
           if (permissionState === 'granted') {
-            console.log("DEBUG: Device orientation permission granted, moving to MUTE_CHECK");
             setState(AppState.MUTE_CHECK);
           }
         })
-        .catch(() => {
-          console.log("DEBUG: Device orientation permission denied or error, moving to MUTE_CHECK anyway");
-          setState(AppState.MUTE_CHECK);
-        });
+        .catch(() => setState(AppState.MUTE_CHECK));
     } else {
-      console.log("DEBUG: No orientation permission needed, moving to MUTE_CHECK");
       setState(AppState.MUTE_CHECK);
     }
   };
 
   const handlePerformerNotesSelect = async (selectedOs: DeviceOS) => {
-    console.log(`DEBUG: Performer selected ${selectedOs} Notes app`);
     setOs(selectedOs);
     setState(AppState.NOTES);
     // Arm the room so the spectator sees the YouTube Loading screen
     try {
-      console.log(`DEBUG: Arming room ${roomId} for performer`);
       const { updateRoomStatus } = await import('./services/firestoreService');
       await updateRoomStatus(roomId, 'armed');
-      console.log(`DEBUG: Room ${roomId} armed successfully`);
     } catch (e) {
       console.error("Error arming room:", e);
     }
@@ -349,7 +314,6 @@ const App: React.FC = () => {
             <MockYouTubePage />
             <div 
               onClick={() => {
-                console.log("DEBUG: Big Dot clicked! Requesting wake lock and moving to WAITING_FOR_FLIP");
                 requestWakeLock();
                 setState(AppState.WAITING_FOR_FLIP);
               }}
@@ -389,15 +353,6 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-white/20 overflow-hidden">
-      {/* Debug Overlay - Remove this in production */}
-      <div className="fixed top-2 left-2 z-[500] bg-black/80 text-white text-[8px] p-2 rounded font-mono border border-white/20">
-        <div>Room: {roomId || 'none'}</div>
-        <div>Role: {userRole || 'spectator'}</div>
-        <div>State: {state}</div>
-        <div>RoomStatus: {roomState?.status || 'none'}</div>
-        <div>VideoID: {roomState?.videoId ? roomState.videoId.substring(0, 8) + '...' : 'none'}</div>
-      </div>
-
       {renderContent()}
       
       {showMagicianPanel && (
@@ -410,18 +365,12 @@ const App: React.FC = () => {
       )}
 
       {(state === AppState.WAITING_FOR_FLIP || state === AppState.REVEAL) && (
-        <>
-          {console.log(`DEBUG: Rendering YouTubePlayer with videoId: ${roomState?.videoId}, isVisible: ${state === AppState.REVEAL}, isUnmuted: ${isUnmuted}`)}
-          <YouTubePlayer 
-            videoId={roomState?.videoId || null} 
-            isVisible={state === AppState.REVEAL} 
-            isUnmuted={isUnmuted}
-            onReady={() => {
-              console.log("DEBUG: YouTubePlayer reported ready!");
-              setIsReadyForReveal(true);
-            }}
-          />
-        </>
+        <YouTubePlayer 
+          videoId={roomState?.videoId || null} 
+          isVisible={state === AppState.REVEAL} 
+          isUnmuted={isUnmuted}
+          onReady={() => setIsReadyForReveal(true)}
+        />
       )}
       
       {state === AppState.REVEAL && (
