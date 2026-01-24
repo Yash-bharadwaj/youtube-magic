@@ -135,23 +135,7 @@ const App: React.FC = () => {
 
   // Flip detection for reveal (If magician armed the room)
   useEffect(() => {
-    if (state === AppState.WAITING_FOR_FLIP && !isFaceDown && roomState?.status === 'revealed' && roomState?.videoId) {
-      // Open YouTube app/website instead of embedded player
-      const videoId = roomState.videoId;
-      const startTime = 15;
-      
-      // Try to open in YouTube app first (mobile), fallback to web
-      const youtubeAppUrl = `youtube://watch?v=${videoId}&t=${startTime}s`;
-      const youtubeWebUrl = `https://www.youtube.com/watch?v=${videoId}&t=${startTime}s`;
-      
-      // Attempt to open in YouTube app
-      window.location.href = youtubeAppUrl;
-      
-      // Fallback to web after a short delay if app doesn't open
-      setTimeout(() => {
-        window.open(youtubeWebUrl, '_blank');
-      }, 500);
-      
+    if (state === AppState.WAITING_FOR_FLIP && !isFaceDown && roomState?.status === 'revealed') {
       setState(AppState.REVEAL);
     }
   }, [isFaceDown, state, roomState]);
@@ -380,7 +364,25 @@ const App: React.FC = () => {
         );
 
       case AppState.REVEAL:
-        return null;
+        return (
+          <div className="relative h-screen w-full overflow-hidden">
+            {roomState?.videoId && (
+              <iframe
+                src={`https://www.youtube.com/watch?v=${roomState.videoId}&t=15s&autoplay=1`}
+                className="absolute inset-0 w-full h-full border-0"
+                allow="autoplay; fullscreen"
+                allowFullScreen
+                title="YouTube Video"
+              />
+            )}
+            <button 
+              onClick={() => window.location.reload()}
+              className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 bg-black/80 text-white text-xs uppercase tracking-widest rounded-lg hover:bg-black transition-all"
+            >
+              Reset
+            </button>
+          </div>
+        );
 
       default:
         return null;
@@ -398,22 +400,6 @@ const App: React.FC = () => {
           onOsChange={setOs}
           onClose={() => setShowMagicianPanel(false)} 
         />
-      )}
-      
-      {state === AppState.REVEAL && (
-        <div className="flex flex-col items-center justify-center h-screen bg-black text-white p-8">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold mb-4">Opening in YouTube...</h2>
-            <p className="text-sm text-white/60">If YouTube doesn't open automatically,</p>
-            <p className="text-sm text-white/60">check your browser's popup settings.</p>
-          </div>
-          <button 
-            onClick={() => window.location.reload()}
-            className="mt-8 px-6 py-3 bg-white/10 rounded-xl text-sm uppercase tracking-widest hover:bg-white/20 transition-all"
-          >
-            Reset Session
-          </button>
-        </div>
       )}
     </div>
   );
