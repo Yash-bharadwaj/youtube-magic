@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Trash2, ShieldAlert, LogOut, Link as LinkIcon, Copy } from 'lucide-react';
+import { Users, Plus, Trash2, ShieldAlert, LogOut, Link as LinkIcon, Copy, Search } from 'lucide-react';
 import { PerformerUser } from '../types';
 import { getAllPerformers, createPerformer, deletePerformer } from '../services/firestoreService';
 import ConfirmDialog from './ConfirmDialog';
@@ -20,6 +20,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // Pagination & Filtering
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [sortBy, setSortBy] = useState<'name' | 'date'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Dialog State
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -163,6 +170,38 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     navigator.clipboard.writeText(email);
     showToast('Email copied to clipboard');
   };
+
+  // Filter and sort performers
+  const filteredPerformers = performers
+    .filter(performer => {
+      const query = searchQuery.toLowerCase();
+      return (
+        performer.name.toLowerCase().includes(query) ||
+        performer.username.toLowerCase().includes(query) ||
+        performer.slug.toLowerCase().includes(query)
+      );
+    })
+    .sort((a, b) => {
+      if (sortBy === 'name') {
+        const comparison = a.name.localeCompare(b.name);
+        return sortOrder === 'asc' ? comparison : -comparison;
+      } else {
+        const dateA = new Date(a.lastLogin || 0).getTime();
+        const dateB = new Date(b.lastLogin || 0).getTime();
+        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+      }
+    });
+
+  // Pagination
+  const totalPages = Math.ceil(filteredPerformers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPerformers = filteredPerformers.slice(startIndex, endIndex);
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   return (
     <div className="min-h-screen bg-[#080808] text-white flex flex-col">
@@ -309,6 +348,68 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
           </form>
         )}
 
+        {/* Search and Filters */}
+        <div className="mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+          <div className="flex-1 max-w-md">
+            <div className="relative">
+              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+              <input
+                type="text"
+                placeholder="Search by name, email, or link..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-lg py-2.5 pl-10 pr-4 text-sm outline-none focus:border-white/30 transition-all text-white placeholder:text-white/30"
+              />
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-white/50">Sort by:</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'name' | 'date')}
+                className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs outline-none focus:border-white/30 text-white"
+              >
+                <option value="date">Last Seen</option>
+                <option value="name">Name</option>
+              </select>
+            </div>
+            
+            <button
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              className="p-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all"
+              title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+            >
+              {sortOrder === 'asc' ? '↑' : '↓'}
+            </button>
+            
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-white/50">Show:</label>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs outline-none focus:border-white/30 text-white"
+              >
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Results Info */}
+        {searchQuery && (
+          <div className="mb-4 text-xs text-white/50">
+            Found {filteredPerformers.length} result{filteredPerformers.length !== 1 ? 's' : ''} for "{searchQuery}"
+          </div>
+        )}
+
         {/* User Table */}
         <div className="border border-white/5 rounded-xl overflow-hidden bg-white/[0.02]">
           <div className="grid grid-cols-[60px_1fr_1fr_1fr_1fr_120px] p-4 border-b border-white/5 text-xs font-medium text-white/40">
@@ -324,9 +425,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
               <div className="p-12 text-center text-white/30 text-sm animate-pulse">
                 Loading performers...
               </div>
-            ) : performers.map((performer, index) => (
+            ) : currentPerformers.length === 0 ? (
+              <div className="p-12 text-center text-white/30 text-sm">
+                {searchQuery ? 'No performers match your search.' : 'No performers created yet.'}
+              </div>
+            ) : currentPerformers.map((performer, index) => (
               <div key={performer.id} className="grid grid-cols-[60px_1fr_1fr_1fr_1fr_120px] p-4 items-center text-sm text-white/70 hover:bg-white/[0.02] transition-colors group">
-                <span className="text-xs text-white/30">{(index + 1).toString().padStart(2, '0')}</span>
+                <span className="text-xs text-white/30">{(startIndex + index + 1).toString().padStart(2, '0')}</span>
                 <div className="flex flex-col">
                   <span className="font-semibold text-white">{performer.name}</span>
                   <span className="text-xs text-white/30">ID: {performer.id}</span>
@@ -357,6 +462,76 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
             ))}
           </div>
         </div>
+
+        {/* Pagination */}
+        {!isLoading && filteredPerformers.length > 0 && totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-between">
+            <div className="text-xs text-white/50">
+              Showing {startIndex + 1} to {Math.min(endIndex, filteredPerformers.length)} of {filteredPerformers.length} performers
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 text-xs bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                First
+              </button>
+              <button
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 text-xs bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                Previous
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-8 h-8 text-xs rounded-lg transition-all ${
+                        currentPage === pageNum
+                          ? 'bg-white text-black font-semibold'
+                          : 'bg-white/5 border border-white/10 hover:bg-white/10'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+              
+              <button
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 text-xs bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                Next
+              </button>
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 text-xs bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                Last
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <ConfirmDialog
