@@ -44,6 +44,18 @@ const App: React.FC = () => {
       // Any other path is treated as a spectator room slug
       setRoomId(path);
       setState(AppState.WELCOME);
+      
+      // Auto-reset the room when spectator lands on WELCOME page
+      // This ensures a fresh start for each performance
+      const resetRoomOnLoad = async () => {
+        try {
+          const { resetRoom } = await import('./services/firestoreService');
+          await resetRoom(path);
+        } catch (error) {
+          console.error("Failed to reset room on load:", error);
+        }
+      };
+      resetRoomOnLoad();
     }
   }, []);
 
