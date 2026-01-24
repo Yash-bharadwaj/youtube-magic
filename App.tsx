@@ -20,6 +20,7 @@ const App: React.FC = () => {
   const [isReadyForReveal, setIsReadyForReveal] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [isUnmuted, setIsUnmuted] = useState(false);
+  const wakeLockRef = React.useRef<any>(null);
   
   // New States
   const [roomId, setRoomId] = useState<string>('');
@@ -128,6 +129,28 @@ const App: React.FC = () => {
     setUserRole(null);
     setState(AppState.LOGIN);
   };
+
+  const requestWakeLock = async () => {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+        console.log('Wake Lock is active');
+      }
+    } catch (err: any) {
+      console.error(`${err.name}, ${err.message}`);
+    }
+  };
+
+  // Re-acquire wake lock on visibility change
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (wakeLockRef.current !== null && document.visibilityState === 'visible') {
+        await requestWakeLock();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   const handleNotesDone = async (text: string) => {
     if (userRole === 'PERFORMER' && text.trim()) {
@@ -281,7 +304,10 @@ const App: React.FC = () => {
           <div className="relative h-screen w-full overflow-hidden">
             <MockYouTubePage />
             <div 
-              onClick={() => setState(AppState.WAITING_FOR_FLIP)}
+              onClick={() => {
+                requestWakeLock();
+                setState(AppState.WAITING_FOR_FLIP);
+              }}
               className="absolute inset-0 z-50 bg-black/60 flex flex-col items-center justify-center p-8 text-center"
             >
               <h2 className="text-white text-3xl font-bold leading-tight mb-16 px-4">
