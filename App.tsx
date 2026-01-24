@@ -212,7 +212,7 @@ const App: React.FC = () => {
               <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
                 <Speaker className="text-[#e53935] w-6 h-6 fill-current" />
               </div>
-              <span className="text-2xl font-normal text-white tracking-tight">Earworm</span>
+              <span className="text-2xl font-normal text-white tracking-tight">YoutubeMagic</span>
             </div>
 
             <div className="flex-1 px-6 pt-12">
@@ -242,10 +242,10 @@ const App: React.FC = () => {
               <div className="mt-20 text-center">
                 <h3 className="text-white text-sm font-bold tracking-widest mb-6 uppercase">WikiTest Services</h3>
                 <p className="text-white/40 text-xs leading-relaxed max-w-[280px] mx-auto">
-                  You haven't opened the Earworm app for a while.
+                  You haven't opened the YoutubeMagic app for a while.
                 </p>
                 <p className="text-white/40 text-xs leading-relaxed max-w-[280px] mx-auto mt-4 italic">
-                  To use the WikiTest options, open Earworm on your phone first.
+                  To use the WikiTest options, open YoutubeMagic on your phone first.
                 </p>
               </div>
             </div>

@@ -16,8 +16,8 @@ export default defineConfig(({ mode }) => {
           registerType: 'autoUpdate',
           includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
           manifest: {
-            name: 'Enigma Notes',
-            short_name: 'Enigma',
+            name: 'YoutubeMagic',
+            short_name: 'YoutubeMagic',
             description: 'The ultimate mind-reading synchronization tool.',
             theme_color: '#050505',
             background_color: '#050505',
