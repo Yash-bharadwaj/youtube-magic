@@ -30,11 +30,19 @@ const App: React.FC = () => {
   // Initialize Room ID from URL
   useEffect(() => {
     const path = window.location.pathname.replace(/^\/|\/$/g, '');
-    const id = path || 'default';
-    setRoomId(id);
     
-    // If we are on a room URL, skip login and act as spectator
-    if (path && path !== 'login' && path !== 'admin') {
+    // Explicit routing logic
+    if (!path || path === 'login') {
+      // Root URL or /login should show login page
+      setRoomId('default');
+      setState(AppState.LOGIN);
+    } else if (path === 'admin') {
+      // Admin URL should check for admin role (handled in login)
+      setRoomId('admin-room');
+      setState(AppState.LOGIN);
+    } else {
+      // Any other path is treated as a spectator room slug
+      setRoomId(path);
       setState(AppState.WELCOME);
     }
   }, []);
@@ -42,6 +50,9 @@ const App: React.FC = () => {
   // Room Listener
   useEffect(() => {
     if (!roomId) return;
+    
+    // Don't subscribe if we're still on login or admin screens
+    if (state === AppState.LOGIN || state === AppState.ADMIN_DASHBOARD) return;
     
     const unsubscribe = subscribeToRoom(roomId, (newState) => {
       setRoomState(newState);
