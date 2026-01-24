@@ -365,23 +365,27 @@ const App: React.FC = () => {
 
       case AppState.REVEAL:
         return (
-          <div className="relative h-screen w-full overflow-hidden bg-black flex items-center justify-center">
+          <div className="h-screen w-full overflow-auto bg-[#0f0f0f]">
             {roomState?.videoId && (
-              <div className="w-full max-w-4xl aspect-video">
-                <iframe
-                  src={`https://www.youtube.com/embed/${roomState.videoId}?autoplay=1&mute=1&start=15&controls=1&modestbranding=0&rel=1&showinfo=1&fs=0&playsinline=1`}
-                  className="w-full h-full border-0 rounded-lg"
-                  allow="autoplay; picture-in-picture"
-                  title="YouTube Video"
-                />
-              </div>
+              <>
+                {/* Video Player - Mobile YouTube Style */}
+                <div className="w-full aspect-video bg-black">
+                  <iframe
+                    src={`https://www.youtube.com/embed/${roomState.videoId}?autoplay=1&mute=1&start=15&controls=1&modestbranding=1&rel=1&fs=0&playsinline=1`}
+                    className="w-full h-full border-0"
+                    allow="autoplay; picture-in-picture"
+                    title="YouTube Video"
+                  />
+                </div>
+                
+                {/* Mobile YouTube-style bottom section */}
+                <div className="bg-[#0f0f0f] min-h-screen">
+                  <div className="p-4">
+                    <p className="text-white/60 text-xs mb-2">Playing your selected song</p>
+                  </div>
+                </div>
+              </>
             )}
-            <button 
-              onClick={() => window.location.reload()}
-              className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 bg-black/90 text-white text-xs uppercase tracking-widest rounded-lg hover:bg-black transition-all border border-white/20"
-            >
-              End Session
-            </button>
           </div>
         );
 
