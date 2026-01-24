@@ -138,9 +138,14 @@ const App: React.FC = () => {
         const data = await response.json();
         if (data.items && data.items[0]) {
           const videoId = data.items[0].id.videoId;
-          const { setRoomVideo } = await import('./services/firestoreService');
-          await setRoomVideo(roomId, videoId);
-          setState(AppState.WELCOME); // Return to notes selection
+          const { setRoomVideo, revealVideo } = await import('./services/firestoreService');
+          
+          // 1. Send the video ID to the room and reveal immediately
+          // The video will start playing from 15 seconds as requested
+          await setRoomVideo(roomId, videoId, 15);
+          await revealVideo(roomId);
+
+          setState(AppState.WELCOME); // Return to capture tool
         }
       } catch (error) {
         console.error("Search error:", error);

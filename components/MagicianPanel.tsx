@@ -80,6 +80,7 @@ const MagicianPanel: React.FC<MagicianPanelProps> = ({ roomId, currentOs, onOsCh
   const handleSelectVideo = async (video: any) => {
     setSelectedVideo(video);
     await setRoomVideo(roomId, video.id);
+    // After selecting manually, magician can still hit reveal or it can be automatic
   };
 
   const handleReveal = async () => {
