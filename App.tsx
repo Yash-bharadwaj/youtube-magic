@@ -83,8 +83,9 @@ const App: React.FC = () => {
           setState(AppState.MUTE_CHECK);
         }
       } else if (newState.status === 'idle') {
-        // Only reset if we were in a reveal/waiting state
-        if (state === AppState.REVEAL || state === AppState.WAITING_FOR_FLIP) {
+        // Only reload if we just finished a reveal
+        // Don't reload if we're waiting for the magician to start
+        if (state === AppState.REVEAL) {
           window.location.reload();
         }
       }
