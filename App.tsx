@@ -6,9 +6,10 @@ import YouTubePlayer from './components/YouTubePlayer';
 import Login from './components/Login';
 import AdminDashboard from './components/AdminDashboard';
 import MagicianPanel from './components/MagicianPanel';
+import MockYouTubePage from './components/MockYouTubePage';
 import { findSongIdentity } from './services/geminiService';
 import { subscribeToRoom } from './services/firestoreService';
-import { VolumeX, Smartphone, Loader2, Youtube, Wifi, Lock, Activity } from 'lucide-react';
+import { VolumeX, Smartphone, Loader2, Youtube, Wifi, Lock, Activity, Speaker } from 'lucide-react';
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>(AppState.LOGIN);
@@ -173,7 +174,7 @@ const App: React.FC = () => {
       case AppState.WELCOME:
         if (userRole === 'PERFORMER') {
           return (
-            <div className="flex flex-col items-center justify-center h-screen px-8 py-16 text-center animate-in fade-in duration-1000">
+            <div className="flex flex-col items-center justify-center h-screen px-8 py-16 text-center animate-in fade-in duration-1000 bg-[#050505]">
               <h2 className="text-xl font-bold tracking-tighter uppercase mb-12">Capture Tool</h2>
               <div className="grid grid-cols-2 gap-6 w-full max-w-[320px]">
                 <button 
@@ -205,48 +206,77 @@ const App: React.FC = () => {
           );
         }
         return (
-          <div className="flex flex-col items-center justify-center h-screen px-8 py-16 text-center animate-in fade-in duration-1000">
-            <button 
-              onClick={startApp}
-              className="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center shadow-[0_0_50px_rgba(255,255,255,0.1)] active:scale-90 transition-all duration-500"
-            >
-              <Youtube className="text-[#FF0000] w-12 h-12 fill-current" />
-            </button>
-            <p className="mt-8 text-[10px] font-bold tracking-[0.5em] uppercase text-white/20">
-              Media Sync
-            </p>
+          <div className="flex flex-col h-screen bg-black overflow-hidden animate-in fade-in duration-700">
+            {/* Red Header */}
+            <div className="bg-[#e53935] flex items-center gap-3 px-6 py-4 shadow-lg">
+              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+                <Speaker className="text-[#e53935] w-6 h-6 fill-current" />
+              </div>
+              <span className="text-2xl font-normal text-white tracking-tight">Earworm</span>
+            </div>
+
+            <div className="flex-1 px-6 pt-12">
+              <h3 className="text-white text-center text-sm font-bold tracking-widest mb-10 uppercase">Basic Services</h3>
+              
+              <div className="space-y-6 max-w-[320px] mx-auto">
+                <button 
+                  onClick={startApp}
+                  className="w-full bg-[#2a2a2a] py-6 px-8 rounded-2xl flex items-center gap-6 active:scale-[0.98] transition-all border border-white/5 group"
+                >
+                  <div className="w-14 h-10 bg-[#e5e5e5] rounded-lg flex items-center justify-center shrink-0">
+                    <div className="w-6 h-4 bg-red-600 rounded-sm flex items-center justify-center">
+                      <div className="w-0 h-0 border-t-[3px] border-t-transparent border-l-[5px] border-l-white border-b-[3px] border-b-transparent" />
+                    </div>
+                  </div>
+                  <span className="text-2xl font-bold text-[#e5e5e5] tracking-tight">YouTube</span>
+                </button>
+
+                <button className="w-full bg-[#2a2a2a] py-6 px-8 rounded-2xl flex items-center gap-6 active:scale-[0.98] transition-all border border-white/5 opacity-80">
+                  <div className="w-14 h-14 bg-[#e5e5e5] rounded-lg flex items-center justify-center shrink-0">
+                    <div className="text-black font-serif text-xl font-bold">W</div>
+                  </div>
+                  <span className="text-2xl font-bold text-[#e5e5e5] tracking-tight">Wikipedia</span>
+                </button>
+              </div>
+
+              <div className="mt-20 text-center">
+                <h3 className="text-white text-sm font-bold tracking-widest mb-6 uppercase">WikiTest Services</h3>
+                <p className="text-white/40 text-xs leading-relaxed max-w-[280px] mx-auto">
+                  You haven't opened the Earworm app for a while.
+                </p>
+                <p className="text-white/40 text-xs leading-relaxed max-w-[280px] mx-auto mt-4 italic">
+                  To use the WikiTest options, open Earworm on your phone first.
+                </p>
+              </div>
+            </div>
           </div>
         );
 
       case AppState.MUTE_CHECK:
         return (
-          <div 
-            onClick={() => setState(AppState.NOTES)}
-            className="flex flex-col items-center justify-center h-screen bg-black cursor-none"
-          >
-            <div className="relative group">
-              <div className="absolute inset-0 bg-white/10 blur-2xl rounded-full animate-pulse scale-150" />
-              <div className="w-4 h-4 bg-white rounded-full relative z-10 shadow-[0_0_20px_rgba(255,255,255,0.5)]" />
+          <div className="relative h-screen w-full overflow-hidden">
+            <MockYouTubePage />
+            <div 
+              onClick={() => setState(AppState.WAITING_FOR_FLIP)}
+              className="absolute inset-0 z-50 bg-black/60 flex flex-col items-center justify-center p-8 text-center"
+            >
+              <h2 className="text-white text-3xl font-bold leading-tight mb-16 px-4">
+                Tap here once to stop the display from sleeping.
+              </h2>
+              <div className="w-32 h-32 bg-white rounded-full shadow-[0_0_50px_rgba(255,255,255,0.3)] animate-pulse active:scale-95 transition-all" />
             </div>
-            <p className="text-[9px] uppercase tracking-[0.4em] text-white/20 mt-12 animate-pulse">
-              Link Active. Tap to initialize.
-            </p>
           </div>
         );
 
-      case AppState.NOTES:
-        return <NotesInterface onDone={handleNotesDone} os={os} />;
-
       case AppState.WAITING_FOR_FLIP:
         return (
-          <div className="flex flex-col items-center justify-center h-screen bg-black">
-            <div className="relative">
-              <div className={`w-3 h-3 rounded-full transition-all duration-1000 ${isFaceDown ? 'bg-green-500 shadow-[0_0_20px_rgba(34,197,94,0.5)]' : 'bg-white/10'}`} />
-            </div>
-            {!isFaceDown && (
-              <p className="text-[8px] uppercase tracking-[0.5em] text-white/10 mt-12">
-                Place device face-down to begin
-              </p>
+          <div className="relative h-screen w-full overflow-hidden">
+            <MockYouTubePage />
+            <div className="absolute inset-0 z-40 bg-black/10 pointer-events-none" />
+            {isFaceDown && (
+              <div className="absolute inset-0 z-50 bg-black flex items-center justify-center">
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-[0_0_20px_rgba(34,197,94,0.5)]" />
+              </div>
             )}
           </div>
         );
