@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Youtube, Play, RotateCcw, X, Music } from 'lucide-react';
 import { setRoomVideo, revealVideo, resetRoom } from '../services/firestoreService';
 import { DeviceOS } from '@/types';
+import NotesInterface from './NotesInterface';
 
 interface MagicianPanelProps {
   roomId: string;
@@ -15,6 +16,37 @@ const MagicianPanel: React.FC<MagicianPanelProps> = ({ roomId, currentOs, onOsCh
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
+  const [showFakeNotes, setShowFakeNotes] = useState(false);
+  const [notesType, setNotesType] = useState<DeviceOS>('ios');
+
+  const searchAndSelect = async (query: string) => {
+    setIsSearching(true);
+    try {
+      const apiKey = process.env.VITE_YOUTUBE_API_KEY;
+      const response = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
+          query
+        )}&type=video&maxResults=1&key=${apiKey}`
+      );
+      const data = await response.json();
+      
+      if (data.items && data.items[0]) {
+        const videoId = data.items[0].id.videoId;
+        await setRoomVideo(roomId, videoId);
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleNotesDone = async (text: string) => {
+    setShowFakeNotes(false);
+    if (text.trim()) {
+      await searchAndSelect(text);
+    }
+  };
 
   const searchYouTube = async () => {
     if (!searchQuery.trim()) return;
@@ -63,32 +95,42 @@ const MagicianPanel: React.FC<MagicianPanelProps> = ({ roomId, currentOs, onOsCh
 
   return (
     <div className="fixed inset-0 z-[200] bg-black/95 text-white flex flex-col p-6 animate-in slide-in-from-bottom duration-500">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h2 className="text-xl font-bold tracking-tighter uppercase">Controller</h2>
-          <p className="text-[10px] text-white/40 tracking-[0.2em]">ACTIVE LINK: /{roomId}</p>
-        </div>
-        <button onClick={onClose} className="p-2 bg-white/5 rounded-full">
-          <X size={20} />
-        </button>
-      </div>
+      {showFakeNotes ? (
+        <NotesInterface os={notesType} onDone={handleNotesDone} />
+      ) : (
+        <>
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h2 className="text-xl font-bold tracking-tighter uppercase">Controller</h2>
+              <p className="text-[10px] text-white/40 tracking-[0.2em]">ACTIVE LINK: /{roomId}</p>
+            </div>
+            <button onClick={onClose} className="p-2 bg-white/5 rounded-full">
+              <X size={20} />
+            </button>
+          </div>
 
-      <div className="flex gap-2 mb-6">
-        <button 
-          onClick={() => onOsChange('ios')}
-          className={`flex-1 py-3 rounded-lg text-[9px] font-bold tracking-widest uppercase border ${currentOs === 'ios' ? 'bg-white text-black border-white' : 'border-white/10 text-white/40'}`}
-        >
-          iPhone Mode
-        </button>
-        <button 
-          onClick={() => onOsChange('android')}
-          className={`flex-1 py-3 rounded-lg text-[9px] font-bold tracking-widest uppercase border ${currentOs === 'android' ? 'bg-white text-black border-white' : 'border-white/10 text-white/40'}`}
-        >
-          Android Mode
-        </button>
-      </div>
+          <div className="grid grid-cols-2 gap-3 mb-8">
+            <button 
+              onClick={() => { setNotesType('ios'); setShowFakeNotes(true); }}
+              className="py-4 rounded-xl bg-white/5 border border-white/10 flex flex-col items-center gap-2 hover:bg-white/10 transition-all"
+            >
+              <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
+                <div className="w-4 h-4 bg-yellow-500 rounded-sm" />
+              </div>
+              <span className="text-[9px] font-bold tracking-widest uppercase">Apple Notes</span>
+            </button>
+            <button 
+              onClick={() => { setNotesType('android'); setShowFakeNotes(true); }}
+              className="py-4 rounded-xl bg-white/5 border border-white/10 flex flex-col items-center gap-2 hover:bg-white/10 transition-all"
+            >
+              <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
+                <div className="w-4 h-4 bg-yellow-600 rounded-full" />
+              </div>
+              <span className="text-[9px] font-bold tracking-widest uppercase">Google Keep</span>
+            </button>
+          </div>
 
-      <div className="flex gap-2 mb-6">
+          <div className="flex gap-2 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={18} />
           <input

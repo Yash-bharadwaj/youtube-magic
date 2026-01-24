@@ -29,6 +29,11 @@ const App: React.FC = () => {
     const path = window.location.pathname.replace(/^\/|\/$/g, '');
     const id = path || 'default';
     setRoomId(id);
+    
+    // If we are on a room URL, skip login and act as spectator
+    if (path && path !== 'login' && path !== 'admin') {
+      setState(AppState.WELCOME);
+    }
   }, []);
 
   // Room Listener
@@ -116,30 +121,45 @@ const App: React.FC = () => {
     setState(AppState.LOGIN);
   };
 
-  const startApp = () => {
-    setIsInitializing(true);
-    setTimeout(() => {
-      if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
-        (DeviceOrientationEvent as any).requestPermission()
-          .then((permissionState: string) => {
-            if (permissionState === 'granted') {
-              setState(AppState.MUTE_CHECK);
-            }
-          })
-          .catch(() => setState(AppState.MUTE_CHECK));
-      } else {
-        setState(AppState.MUTE_CHECK);
+  const handleNotesDone = async (text: string) => {
+    if (userRole === 'PERFORMER' && text.trim()) {
+      // Magician flow: Search and send to room
+      try {
+        const apiKey = process.env.VITE_YOUTUBE_API_KEY;
+        const response = await fetch(
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(text)}&type=video&maxResults=1&key=${apiKey}`
+        );
+        const data = await response.json();
+        if (data.items && data.items[0]) {
+          const videoId = data.items[0].id.videoId;
+          const { setRoomVideo } = await import('./services/firestoreService');
+          await setRoomVideo(roomId, videoId);
+          setState(AppState.WELCOME); // Return to notes selection
+        }
+      } catch (error) {
+        console.error("Search error:", error);
+        setState(AppState.WELCOME);
       }
-    }, 1500);
+    } else {
+      // Spectator flow (if notes were used)
+      setState(AppState.WAITING_FOR_FLIP);
+    }
   };
 
-  const handleNotesDone = async (text: string) => {
-    setState(AppState.PROCESSING);
-    // In the new flow, the notes are just misdirection.
-    // But we still "process" to maintain the illusion.
-    setTimeout(() => {
-      setState(AppState.WAITING_FOR_FLIP);
-    }, 2000);
+  const startApp = () => {
+    setIsInitializing(true);
+    // Request permission for orientation if needed (iOS)
+    if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+      (DeviceOrientationEvent as any).requestPermission()
+        .then((permissionState: string) => {
+          if (permissionState === 'granted') {
+            setState(AppState.MUTE_CHECK);
+          }
+        })
+        .catch(() => setState(AppState.MUTE_CHECK));
+    } else {
+      setState(AppState.MUTE_CHECK);
+    }
   };
 
   const renderContent = () => {
@@ -151,98 +171,82 @@ const App: React.FC = () => {
         return <AdminDashboard onLogout={handleLogout} />;
 
       case AppState.WELCOME:
-        return (
-          <div className="flex flex-col items-center justify-between h-screen px-8 py-16 text-center animate-in fade-in duration-1000">
-            <div className="flex flex-col items-center gap-2 mt-12">
-              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.15)] mb-4">
-                <Youtube className="text-[#FF0000] w-9 h-9 fill-current" />
-              </div>
-              <h1 className="text-[10px] font-bold tracking-[0.5em] uppercase text-white/40">
-                Sync Master Portal
-              </h1>
-            </div>
-
-            <div className="flex flex-col items-center">
-              <h2 className="text-3xl font-serif italic mb-3">Sync Stream</h2>
-              <p className="text-white/30 text-xs max-w-[260px] leading-relaxed font-light">
-                Initializing encrypted handshake for remote audio visualization.
-              </p>
-            </div>
-
-            <div className="w-full max-w-[280px] space-y-4">
-              <button 
-                onClick={startApp}
-                disabled={isInitializing}
-                className="w-full py-4 rounded-xl bg-white text-black font-bold text-xs tracking-[0.2em] transition-all active:scale-95 disabled:opacity-50 relative overflow-hidden shadow-xl"
-              >
-                {isInitializing ? (
-                  <div className="flex items-center justify-center gap-3">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>CONNECTING...</span>
+        if (userRole === 'PERFORMER') {
+          return (
+            <div className="flex flex-col items-center justify-center h-screen px-8 py-16 text-center animate-in fade-in duration-1000">
+              <h2 className="text-xl font-bold tracking-tighter uppercase mb-12">Capture Tool</h2>
+              <div className="grid grid-cols-2 gap-6 w-full max-w-[320px]">
+                <button 
+                  onClick={() => { setOs('ios'); setState(AppState.NOTES); }}
+                  className="flex flex-col items-center gap-4 p-6 bg-white/5 border border-white/10 rounded-3xl active:scale-95 transition-all"
+                >
+                  <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-xl">
+                    <div className="w-8 h-8 bg-yellow-500 rounded-md" />
                   </div>
-                ) : (
-                  "ESTABLISH LINK"
-                )}
-              </button>
-              
+                  <span className="text-[10px] font-bold tracking-widest uppercase text-white/40">iOS Notes</span>
+                </button>
+                <button 
+                  onClick={() => { setOs('android'); setState(AppState.NOTES); }}
+                  className="flex flex-col items-center gap-4 p-6 bg-white/5 border border-white/10 rounded-3xl active:scale-95 transition-all"
+                >
+                  <div className="w-16 h-16 bg-[#202124] rounded-2xl flex items-center justify-center shadow-xl border border-white/5">
+                    <div className="w-8 h-8 bg-yellow-600 rounded-full" />
+                  </div>
+                  <span className="text-[10px] font-bold tracking-widest uppercase text-white/40">Keep</span>
+                </button>
+              </div>
               <button 
                 onClick={handleLogout}
-                className="w-full py-2 text-[9px] font-bold tracking-[0.4em] text-white/10 hover:text-white/30 transition-colors uppercase"
+                className="mt-16 text-[9px] font-bold tracking-[0.4em] text-white/10 hover:text-white/30 transition-colors uppercase"
               >
-                Terminate Session
+                Logout Performer
               </button>
             </div>
+          );
+        }
+        return (
+          <div className="flex flex-col items-center justify-center h-screen px-8 py-16 text-center animate-in fade-in duration-1000">
+            <button 
+              onClick={startApp}
+              className="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center shadow-[0_0_50px_rgba(255,255,255,0.1)] active:scale-90 transition-all duration-500"
+            >
+              <Youtube className="text-[#FF0000] w-12 h-12 fill-current" />
+            </button>
+            <p className="mt-8 text-[10px] font-bold tracking-[0.5em] uppercase text-white/20">
+              Media Sync
+            </p>
           </div>
         );
 
       case AppState.MUTE_CHECK:
         return (
-          <div className="flex flex-col items-center justify-center h-screen px-8 text-center bg-black animate-in zoom-in-95 duration-500">
-            <div className="relative mb-10">
-              <div className="absolute inset-0 bg-white/5 blur-3xl rounded-full scale-150" />
-              <VolumeX className="text-white w-14 h-14 relative z-10 animate-pulse" />
+          <div 
+            onClick={() => setState(AppState.NOTES)}
+            className="flex flex-col items-center justify-center h-screen bg-black cursor-none"
+          >
+            <div className="relative group">
+              <div className="absolute inset-0 bg-white/10 blur-2xl rounded-full animate-pulse scale-150" />
+              <div className="w-4 h-4 bg-white rounded-full relative z-10 shadow-[0_0_20px_rgba(255,255,255,0.5)]" />
             </div>
-            <h2 className="text-xl font-light mb-4 uppercase tracking-[0.3em] text-white/90">Acoustic Check</h2>
-            <p className="text-white/40 mb-12 text-sm leading-relaxed max-w-xs italic">
-              "For the synchronization to remain covert, please toggle your hardware mute switch and lower volume to zero."
+            <p className="text-[9px] uppercase tracking-[0.4em] text-white/20 mt-12 animate-pulse">
+              Link Active. Tap to initialize.
             </p>
-            <button 
-              onClick={() => setState(AppState.NOTES)}
-              className="px-12 py-4 rounded-full border border-white/10 bg-white/5 text-white font-medium text-[10px] tracking-[0.3em] uppercase hover:bg-white/10 transition-all active:scale-95 shadow-inner"
-            >
-              System Muted
-            </button>
           </div>
         );
 
       case AppState.NOTES:
         return <NotesInterface onDone={handleNotesDone} os={os} />;
 
-      case AppState.PROCESSING:
+      case AppState.WAITING_FOR_FLIP:
         return (
           <div className="flex flex-col items-center justify-center h-screen bg-black">
             <div className="relative">
-              <div className="absolute inset-0 bg-white/5 blur-2xl animate-pulse" />
-              <Loader2 className="w-10 h-10 animate-spin text-white/40 relative z-10" />
+              <div className={`w-3 h-3 rounded-full transition-all duration-1000 ${isFaceDown ? 'bg-green-500 shadow-[0_0_20px_rgba(34,197,94,0.5)]' : 'bg-white/10'}`} />
             </div>
-            <p className="text-[10px] uppercase tracking-[0.4em] text-white/30 mt-8">Analyzing Spectrum</p>
-          </div>
-        );
-
-      case AppState.WAITING_FOR_FLIP:
-        return (
-          <div className="flex flex-col items-center justify-center h-screen px-8 text-center animate-in fade-in duration-1000">
-            <div className={`p-10 rounded-full border border-white/5 transition-all duration-1000 ${isFaceDown ? 'scale-110 border-white/20 bg-white/5' : 'scale-100'}`}>
-              <Smartphone className={`w-12 h-12 transition-all duration-1000 ${isFaceDown ? 'text-white' : 'text-white/10'}`} />
-            </div>
-            <h2 className="text-2xl font-serif italic mt-8 mb-4">Frequency Set</h2>
-            <p className="text-white/30 text-sm leading-relaxed max-w-xs mb-10">
-              Turn your device face-down. Visualize the artist in your mind.
-            </p>
-            {isFaceDown && (
-              <div className="px-6 py-2 rounded-full bg-green-500/10 border border-green-500/20 text-green-400/70 text-[10px] tracking-[0.3em] uppercase animate-pulse">
-                Synchronized
-              </div>
+            {!isFaceDown && (
+              <p className="text-[8px] uppercase tracking-[0.5em] text-white/10 mt-12">
+                Place device face-down to begin
+              </p>
             )}
           </div>
         );
