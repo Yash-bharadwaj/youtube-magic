@@ -6,6 +6,7 @@ import Login from './components/Login';
 import AdminDashboard from './components/AdminDashboard';
 import MagicianPanel from './components/MagicianPanel';
 import MockYouTubePage from './components/MockYouTubePage';
+import InstallPWA from './components/InstallPWA';
 import { findSongIdentity } from './services/geminiService';
 import { subscribeToRoom } from './services/firestoreService';
 import { VolumeX, Smartphone, Loader2, Youtube, Wifi, Lock, Activity, Speaker } from 'lucide-react';
@@ -389,6 +390,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-white/20 overflow-hidden">
+      <InstallPWA />
       {renderContent()}
       
       {showMagicianPanel && (
