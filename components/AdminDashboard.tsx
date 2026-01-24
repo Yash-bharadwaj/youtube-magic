@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Trash2, Search, Settings, LogOut, LayoutGrid, ShieldAlert, Cpu, Link as LinkIcon, Copy } from 'lucide-react';
+import { Users, Plus, Trash2, ShieldAlert, LogOut, Link as LinkIcon, Copy } from 'lucide-react';
 import { PerformerUser } from '../types';
 import { getAllPerformers, createPerformer, deletePerformer } from '../services/firestoreService';
 import ConfirmDialog from './ConfirmDialog';
@@ -165,61 +165,43 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#080808] text-white font-mono flex flex-col md:flex-row">
-      {/* Sidebar */}
-      <div className="w-full md:w-64 border-b md:border-b-0 md:border-r border-white/5 p-6 flex flex-col justify-between">
-        <div>
-          <div className="flex items-center gap-3 mb-10">
+    <div className="min-h-screen bg-[#080808] text-white flex flex-col">
+      {/* Main Content */}
+      <div className="flex-1 p-6 md:p-12 overflow-y-auto max-w-7xl mx-auto w-full">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-12">
+          <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
               <ShieldAlert className="text-black w-5 h-5" />
             </div>
-            <span className="text-xs font-bold tracking-tighter uppercase">Admin_Node</span>
+            <span className="text-sm font-bold tracking-tight">Admin Dashboard</span>
           </div>
-          
-          <nav className="space-y-1">
-            <button className="w-full flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-xs text-white">
-              <Users size={16} className="text-white/40" />
-              Users
-            </button>
-            <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/40 rounded-lg text-xs transition-all">
-              <LayoutGrid size={16} />
-              Performance
-            </button>
-            <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white/40 rounded-lg text-xs transition-all">
-              <Cpu size={16} />
-              System
-            </button>
-          </nav>
+          <button 
+            onClick={onLogout}
+            className="flex items-center gap-2 px-4 py-2 text-red-500/60 hover:text-red-500 text-xs transition-all"
+          >
+            <LogOut size={16} />
+            Logout
+          </button>
         </div>
 
-        <button 
-          onClick={onLogout}
-          className="flex items-center gap-3 px-4 py-3 text-red-500/60 hover:text-red-500 text-xs transition-all"
-        >
-          <LogOut size={16} />
-          TERMINATE_SESSION
-        </button>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 p-6 md:p-12 overflow-y-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
             <div className="flex items-center gap-4 mb-1">
-              <h2 className="text-2xl font-bold tracking-tighter uppercase">User Management</h2>
-              <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold text-white/40">
-                TOTAL: {performers.length}
+              <h2 className="text-2xl font-bold tracking-tight">User Management</h2>
+              <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-white/60">
+                Total: {performers.length}
               </span>
             </div>
-            <p className="text-white/30 text-[10px] tracking-widest uppercase">Manage Enigma Sync Performer Credentials</p>
+            <p className="text-white/40 text-sm">Manage performer accounts and access links</p>
           </div>
           
           <button 
             onClick={() => setShowAddForm(!showAddForm)}
-            className="flex items-center justify-center gap-2 bg-white text-black px-6 py-3 rounded-lg text-xs font-bold tracking-tighter hover:bg-white/90 transition-all active:scale-95"
+            className="flex items-center justify-center gap-2 bg-white text-black px-6 py-3 rounded-lg text-sm font-semibold hover:bg-white/90 transition-all active:scale-95"
           >
             <Plus size={16} />
-            {showAddForm ? 'CANCEL' : 'CREATE_PERFORMER'}
+            {showAddForm ? 'Cancel' : 'Create Performer'}
           </button>
         </div>
 
@@ -227,7 +209,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
           <form onSubmit={handleAddPerformer} className="mb-12 p-8 bg-white/5 border border-white/10 rounded-xl animate-in slide-in-from-top-4 duration-500">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 mb-8">
               <div className="space-y-2">
-                <label className="text-[10px] text-white/40 tracking-widest uppercase ml-1">Performer Name</label>
+                <label className="text-xs text-white/60 font-medium">Performer Name</label>
                 <input
                   type="text"
                   placeholder="e.g. The Great Illusionist"
@@ -236,18 +218,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                     setNewName(e.target.value);
                     if (formErrors.name) setFormErrors({...formErrors, name: ''});
                   }}
-                  className={`w-full bg-black/40 border ${formErrors.name ? 'border-red-500/50' : 'border-white/10'} p-4 text-xs outline-none focus:border-white/30 rounded-lg transition-all text-white`}
+                  className={`w-full bg-black/40 border ${formErrors.name ? 'border-red-500/50' : 'border-white/10'} p-4 text-sm outline-none focus:border-white/30 rounded-lg transition-all text-white`}
                   required
                 />
                 {formErrors.name ? (
-                  <p className="text-[9px] text-red-500 ml-1 italic">{formErrors.name}</p>
+                  <p className="text-xs text-red-500">{formErrors.name}</p>
                 ) : (
-                  <p className="text-[9px] text-white/20 ml-1 italic">Used for internal identification.</p>
+                  <p className="text-xs text-white/30">Used for internal identification.</p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] text-white/40 tracking-widest uppercase ml-1">Custom Link Name</label>
+                <label className="text-xs text-white/60 font-medium">Custom Link Name</label>
                 <input
                   type="text"
                   placeholder="e.g. yash"
@@ -256,18 +238,34 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                     setNewSlug(e.target.value);
                     if (formErrors.slug) setFormErrors({...formErrors, slug: ''});
                   }}
-                  className={`w-full bg-black/40 border ${formErrors.slug ? 'border-red-500/50' : 'border-white/10'} p-4 text-xs outline-none focus:border-white/30 rounded-lg transition-all text-white`}
+                  className={`w-full bg-black/40 border ${formErrors.slug ? 'border-red-500/50' : 'border-white/10'} p-4 text-sm outline-none focus:border-white/30 rounded-lg transition-all text-white`}
                   required
                 />
                 {formErrors.slug ? (
-                  <p className="text-[9px] text-red-500 ml-1 italic">{formErrors.slug}</p>
+                  <p className="text-xs text-red-500">{formErrors.slug}</p>
                 ) : (
-                  <p className="text-[9px] text-white/20 ml-1 italic">The end of the URL: enigma.app/<strong>{newSlug || 'name'}</strong></p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs text-white/30">Spectator URL: {window.location.origin}/<strong>{newSlug || 'name'}</strong></p>
+                    {newSlug && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const url = `${window.location.origin}/${newSlug}`;
+                          navigator.clipboard.writeText(url);
+                          showToast('Spectator link copied');
+                        }}
+                        className="flex items-center gap-1 px-2 py-1 text-xs text-white/40 hover:text-white transition-colors shrink-0"
+                      >
+                        <Copy size={12} />
+                        Copy
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] text-white/40 tracking-widest uppercase ml-1">Login Email</label>
+                <label className="text-xs text-white/60 font-medium">Login Email</label>
                 <input
                   type="email"
                   placeholder="e.g. magician@email.com"
@@ -276,16 +274,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                     setNewUsername(e.target.value);
                     if (formErrors.username) setFormErrors({...formErrors, username: ''});
                   }}
-                  className={`w-full bg-black/40 border ${formErrors.username ? 'border-red-500/50' : 'border-white/10'} p-4 text-xs outline-none focus:border-white/30 rounded-lg transition-all text-white`}
+                  className={`w-full bg-black/40 border ${formErrors.username ? 'border-red-500/50' : 'border-white/10'} p-4 text-sm outline-none focus:border-white/30 rounded-lg transition-all text-white`}
                   required
                 />
                 {formErrors.username && (
-                  <p className="text-[9px] text-red-500 ml-1 italic">{formErrors.username}</p>
+                  <p className="text-xs text-red-500">{formErrors.username}</p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] text-white/40 tracking-widest uppercase ml-1">Login Password</label>
+                <label className="text-xs text-white/60 font-medium">Login Password</label>
                 <input
                   type="password"
                   placeholder="••••••••"
@@ -294,65 +292,65 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                     setNewPassword(e.target.value);
                     if (formErrors.password) setFormErrors({...formErrors, password: ''});
                   }}
-                  className={`w-full bg-black/40 border ${formErrors.password ? 'border-red-500/50' : 'border-white/10'} p-4 text-xs outline-none focus:border-white/30 rounded-lg transition-all text-white`}
+                  className={`w-full bg-black/40 border ${formErrors.password ? 'border-red-500/50' : 'border-white/10'} p-4 text-sm outline-none focus:border-white/30 rounded-lg transition-all text-white`}
                   required
                 />
                 {formErrors.password && (
-                  <p className="text-[9px] text-red-500 ml-1 italic">{formErrors.password}</p>
+                  <p className="text-xs text-red-500">{formErrors.password}</p>
                 )}
               </div>
             </div>
             <button 
               disabled={isSubmitting}
-              className="bg-white text-black hover:bg-white/90 disabled:opacity-50 px-10 py-4 rounded-lg text-[10px] font-bold tracking-[0.2em] transition-all active:scale-95 uppercase"
+              className="bg-white text-black hover:bg-white/90 disabled:opacity-50 px-8 py-3 rounded-lg text-sm font-semibold transition-all active:scale-95"
             >
-              {isSubmitting ? 'Creating Performer...' : 'Save & Create Performer'}
+              {isSubmitting ? 'Creating...' : 'Save & Create Performer'}
             </button>
           </form>
         )}
 
         {/* User Table */}
         <div className="border border-white/5 rounded-xl overflow-hidden bg-white/[0.02]">
-          <div className="grid grid-cols-[60px_1fr_1fr_1fr_1fr_120px] p-4 border-b border-white/5 text-[9px] font-bold text-white/20 uppercase tracking-[0.3em]">
-            <span>S.No</span>
+          <div className="grid grid-cols-[60px_1fr_1fr_1fr_1fr_120px] p-4 border-b border-white/5 text-xs font-medium text-white/40">
+            <span>No.</span>
             <span>Performer</span>
             <span>Login Email</span>
-            <span>Link URL</span>
+            <span>Spectator Link</span>
             <span>Last Seen</span>
-            <span className="text-right">Manage</span>
+            <span className="text-right">Actions</span>
           </div>
           <div className="divide-y divide-white/5">
             {isLoading ? (
-              <div className="p-12 text-center text-white/20 text-xs animate-pulse uppercase tracking-widest">
-                Fetching cloud data...
+              <div className="p-12 text-center text-white/30 text-sm animate-pulse">
+                Loading performers...
               </div>
             ) : performers.map((performer, index) => (
-              <div key={performer.id} className="grid grid-cols-[60px_1fr_1fr_1fr_1fr_120px] p-4 items-center text-xs text-white/70 hover:bg-white/[0.02] transition-colors group">
-                <span className="text-[10px] font-mono text-white/20">{(index + 1).toString().padStart(2, '0')}</span>
+              <div key={performer.id} className="grid grid-cols-[60px_1fr_1fr_1fr_1fr_120px] p-4 items-center text-sm text-white/70 hover:bg-white/[0.02] transition-colors group">
+                <span className="text-xs text-white/30">{(index + 1).toString().padStart(2, '0')}</span>
                 <div className="flex flex-col">
-                  <span className="font-bold text-white tracking-tight">{performer.name}</span>
-                  <span className="text-[10px] text-white/20 uppercase tracking-tighter">ID: {performer.id}</span>
+                  <span className="font-semibold text-white">{performer.name}</span>
+                  <span className="text-xs text-white/30">ID: {performer.id}</span>
                 </div>
                 <div className="flex items-center gap-2 pr-4 min-w-0">
-                  <span className="text-white/40 truncate">{performer.username}</span>
-                  <button onClick={() => copyEmail(performer.username)} className="p-1 hover:text-white text-white/20 transition-colors shrink-0">
+                  <span className="text-white/50 truncate text-sm">{performer.username}</span>
+                  <button onClick={() => copyEmail(performer.username)} className="p-1 hover:text-white text-white/30 transition-colors shrink-0">
                     <Copy size={12} />
                   </button>
                 </div>
-                <span className="text-white/40 flex items-center gap-2">
-                  /{performer.slug}
-                  <button onClick={() => copyLink(performer.slug)} className="p-1 hover:text-white transition-colors">
+                <div className="flex items-center gap-2">
+                  <span className="text-white/50 text-sm">/{performer.slug}</span>
+                  <button onClick={() => copyLink(performer.slug)} className="p-1 hover:text-white text-white/30 transition-colors">
                     <LinkIcon size={12} />
                   </button>
-                </span>
-                <span className="text-[10px] font-mono text-white/30">{formatDate(performer.lastLogin)}</span>
+                </div>
+                <span className="text-xs text-white/40">{formatDate(performer.lastLogin)}</span>
                 <div className="text-right">
                   <button 
                     onClick={() => handleDeleteClick(performer.id, performer.slug)}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all text-[10px] font-bold tracking-tighter"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all text-xs font-medium"
                   >
-                    <Trash2 size={14} />
-                    DELETE
+                    <Trash2 size={12} />
+                    Delete
                   </button>
                 </div>
               </div>
