@@ -135,10 +135,8 @@ const App: React.FC = () => {
 
   // Flip detection for reveal (If magician armed the room)
   useEffect(() => {
-    if (state === AppState.WAITING_FOR_FLIP && !isFaceDown && roomState?.status === 'revealed' && roomState?.videoId) {
-      // Redirect to mobile YouTube
-      const videoId = roomState.videoId;
-      window.location.href = `https://m.youtube.com/watch?v=${videoId}&t=15s`;
+    if (state === AppState.WAITING_FOR_FLIP && !isFaceDown && roomState?.status === 'revealed') {
+      setState(AppState.REVEAL);
     }
   }, [isFaceDown, state, roomState]);
 
@@ -360,6 +358,22 @@ const App: React.FC = () => {
             {isFaceDown && (
               <div className="absolute inset-0 z-50 bg-black flex items-center justify-center">
                 <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-[0_0_20px_rgba(34,197,94,0.5)]" />
+              </div>
+            )}
+          </div>
+        );
+
+      case AppState.REVEAL:
+        return (
+          <div className="relative h-screen w-full overflow-hidden bg-black flex items-center justify-center">
+            {roomState?.videoId && (
+              <div className="w-full max-w-4xl aspect-video">
+                <iframe
+                  src={`https://www.youtube.com/embed/${roomState.videoId}?autoplay=1&mute=1&start=15&controls=1&modestbranding=0&rel=1&showinfo=1&fs=0&playsinline=1`}
+                  className="w-full h-full border-0 rounded-lg"
+                  allow="autoplay; picture-in-picture"
+                  title="YouTube Video"
+                />
               </div>
             )}
           </div>
