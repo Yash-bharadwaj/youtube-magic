@@ -32,7 +32,9 @@ const MagicianPanel: React.FC<MagicianPanelProps> = ({ roomId, currentOs, onOsCh
       
       if (data.items && data.items[0]) {
         const videoId = data.items[0].id.videoId;
-        await setRoomVideo(roomId, videoId);
+        // Start from 15s and reveal immediately
+        await setRoomVideo(roomId, videoId, 15);
+        await revealVideo(roomId);
       }
     } catch (error) {
       console.error("Search error:", error);
@@ -79,8 +81,8 @@ const MagicianPanel: React.FC<MagicianPanelProps> = ({ roomId, currentOs, onOsCh
 
   const handleSelectVideo = async (video: any) => {
     setSelectedVideo(video);
-    await setRoomVideo(roomId, video.id);
-    // After selecting manually, magician can still hit reveal or it can be automatic
+    await setRoomVideo(roomId, video.id, 15);
+    // After selecting manually, magician can still hit reveal
   };
 
   const handleReveal = async () => {
