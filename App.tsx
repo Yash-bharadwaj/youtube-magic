@@ -251,7 +251,10 @@ const App: React.FC = () => {
         if (userRole === 'PERFORMER') {
           return (
             <div className="flex flex-col items-center justify-center h-screen px-8 py-16 text-center animate-in fade-in duration-1000 bg-[#050505]">
-              <h2 className="text-xl font-bold tracking-tighter uppercase mb-12">Capture Tool</h2>
+              <h2 className="text-xl font-bold tracking-tighter uppercase mb-4">Select Your Notes App</h2>
+              <p className="text-xs text-white/40 mb-12 max-w-[280px]">
+                Choose the notes app that matches your device: Google Keep for Android or Apple Notes for iOS
+              </p>
               <div className="grid grid-cols-2 gap-6 w-full max-w-[320px]">
                 <button 
                   onClick={() => handlePerformerNotesSelect('ios')}
