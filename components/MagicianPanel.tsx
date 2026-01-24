@@ -22,7 +22,7 @@ const MagicianPanel: React.FC<MagicianPanelProps> = ({ roomId, currentOs, onOsCh
   const searchAndSelect = async (query: string) => {
     setIsSearching(true);
     try {
-      const apiKey = process.env.VITE_YOUTUBE_API_KEY;
+      const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
       const response = await fetch(
         `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
           query
@@ -52,7 +52,7 @@ const MagicianPanel: React.FC<MagicianPanelProps> = ({ roomId, currentOs, onOsCh
     if (!searchQuery.trim()) return;
     setIsSearching(true);
     try {
-      const apiKey = process.env.VITE_YOUTUBE_API_KEY;
+      const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
       const response = await fetch(
         `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
           searchQuery

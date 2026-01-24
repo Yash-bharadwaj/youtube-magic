@@ -156,7 +156,7 @@ const App: React.FC = () => {
     if (userRole === 'PERFORMER' && text.trim()) {
       // Magician flow: Search and send to room
       try {
-        const apiKey = process.env.VITE_YOUTUBE_API_KEY;
+        const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
         const response = await fetch(
           `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(text)}&type=video&maxResults=1&key=${apiKey}`
         );
