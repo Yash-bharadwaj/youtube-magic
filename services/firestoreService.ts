@@ -26,37 +26,37 @@ export const subscribeToRoom = (roomId: string, callback: (state: RoomState) => 
 
 export const updateRoomStatus = async (roomId: string, status: RoomState['status']) => {
   const roomRef = doc(db, ROOMS_COLLECTION, roomId);
-  await updateDoc(roomRef, { 
+  await setDoc(roomRef, { 
     status,
     updatedAt: serverTimestamp()
-  });
+  }, { merge: true });
 };
 
 export const setRoomVideo = async (roomId: string, videoId: string, startAt: number = 12) => {
   const roomRef = doc(db, ROOMS_COLLECTION, roomId);
-  await updateDoc(roomRef, {
+  await setDoc(roomRef, {
     videoId,
     startAt,
     status: 'armed',
     updatedAt: serverTimestamp()
-  });
+  }, { merge: true });
 };
 
 export const revealVideo = async (roomId: string) => {
   const roomRef = doc(db, ROOMS_COLLECTION, roomId);
-  await updateDoc(roomRef, {
+  await setDoc(roomRef, {
     status: 'revealed',
     updatedAt: serverTimestamp()
-  });
+  }, { merge: true });
 };
 
 export const resetRoom = async (roomId: string) => {
   const roomRef = doc(db, ROOMS_COLLECTION, roomId);
-  await updateDoc(roomRef, {
+  await setDoc(roomRef, {
     status: 'idle',
     videoId: null,
     updatedAt: serverTimestamp()
-  });
+  }, { merge: true });
 };
 
 // Performer Operations
