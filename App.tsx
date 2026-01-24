@@ -46,6 +46,11 @@ const App: React.FC = () => {
       // Sync state with Firestore
       if (newState.status === 'revealed') {
         setState(AppState.REVEAL);
+      } else if (newState.status === 'armed') {
+        // When magician arms the room (by opening notes), spectator goes to loading screen
+        if (userRole !== 'PERFORMER' && state === AppState.WELCOME) {
+          setState(AppState.MUTE_CHECK);
+        }
       } else if (newState.status === 'idle') {
         // Only reset if we were in a reveal/waiting state
         if (state === AppState.REVEAL || state === AppState.WAITING_FOR_FLIP) {
@@ -163,6 +168,18 @@ const App: React.FC = () => {
     }
   };
 
+  const handlePerformerNotesSelect = async (selectedOs: DeviceOS) => {
+    setOs(selectedOs);
+    setState(AppState.NOTES);
+    // Arm the room so the spectator sees the YouTube Loading screen
+    try {
+      const { updateRoomStatus } = await import('./services/firestoreService');
+      await updateRoomStatus(roomId, 'armed');
+    } catch (e) {
+      console.error("Error arming room:", e);
+    }
+  };
+
   const renderContent = () => {
     switch (state) {
       case AppState.LOGIN:
@@ -178,7 +195,7 @@ const App: React.FC = () => {
               <h2 className="text-xl font-bold tracking-tighter uppercase mb-12">Capture Tool</h2>
               <div className="grid grid-cols-2 gap-6 w-full max-w-[320px]">
                 <button 
-                  onClick={() => { setOs('ios'); setState(AppState.NOTES); }}
+                  onClick={() => handlePerformerNotesSelect('ios')}
                   className="flex flex-col items-center gap-4 p-6 bg-white/5 border border-white/10 rounded-3xl active:scale-95 transition-all"
                 >
                   <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-xl">
@@ -187,7 +204,7 @@ const App: React.FC = () => {
                   <span className="text-[10px] font-bold tracking-widest uppercase text-white/40">iOS Notes</span>
                 </button>
                 <button 
-                  onClick={() => { setOs('android'); setState(AppState.NOTES); }}
+                  onClick={() => handlePerformerNotesSelect('android')}
                   className="flex flex-col items-center gap-4 p-6 bg-white/5 border border-white/10 rounded-3xl active:scale-95 transition-all"
                 >
                   <div className="w-16 h-16 bg-[#202124] rounded-2xl flex items-center justify-center shadow-xl border border-white/5">
@@ -267,6 +284,9 @@ const App: React.FC = () => {
             </div>
           </div>
         );
+
+      case AppState.NOTES:
+        return <NotesInterface onDone={handleNotesDone} os={os} />;
 
       case AppState.WAITING_FOR_FLIP:
         return (
