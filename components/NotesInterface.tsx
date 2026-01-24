@@ -22,6 +22,18 @@ const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os }) => {
     }
   }, []);
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      // In mobile, "Enter" is often what they press to finish.
+      // We check if there's content before triggering.
+      const finalContent = os === 'android' ? `${title} ${text}` : text;
+      if (finalContent.trim()) {
+        e.preventDefault();
+        onDone(finalContent);
+      }
+    }
+  };
+
   const handleDone = () => {
     const finalContent = os === 'android' ? `${title} ${text}` : text;
     if (finalContent.trim()) {
@@ -47,10 +59,10 @@ const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os }) => {
           <button onClick={handleDone} className="p-3 text-[#9aa0a6] active:bg-white/10 rounded-full transition-colors">
             <ArrowLeft size={22} />
           </button>
-          <div className="flex gap-1 text-[#9aa0a6]">
+          <div className="flex gap-1 items-center text-[#9aa0a6]">
             <button className="p-3 active:bg-white/10 rounded-full transition-colors"><Pin size={20} /></button>
             <button className="p-3 active:bg-white/10 rounded-full transition-colors"><Bell size={20} /></button>
-            <button className="p-3 active:bg-white/10 rounded-full transition-colors"><Archive size={20} /></button>
+            <button onClick={handleDone} className="px-4 py-2 text-sm font-medium text-[#e8eaed] active:bg-white/10 rounded-lg transition-colors">Done</button>
           </div>
         </div>
 
@@ -61,17 +73,21 @@ const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os }) => {
             placeholder="Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            onKeyDown={handleKeyDown}
             className="w-full bg-transparent border-none outline-none text-[22px] font-medium placeholder-[#5f6368] mb-4"
             autoComplete="off"
+            enterKeyHint="done"
           />
           <textarea
             ref={textareaRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="Note"
             className="w-full bg-transparent border-none outline-none text-[16px] leading-relaxed resize-none h-full placeholder-[#5f6368]"
             spellCheck={false}
             autoComplete="off"
+            enterKeyHint="done"
           />
         </div>
 
@@ -118,10 +134,12 @@ const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os }) => {
           ref={textareaRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder="New Note"
           className="w-full bg-transparent border-none outline-none text-[19px] leading-snug resize-none h-full placeholder-[#48484a] caret-[#e5b32a]"
           spellCheck={false}
           autoComplete="off"
+          enterKeyHint="done"
         />
       </div>
 
