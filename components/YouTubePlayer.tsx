@@ -40,7 +40,8 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, isVisible, isUnm
           showinfo: 0,
           mute: 1, // Always start muted
           start: 15,
-          playsinline: 1
+          playsinline: 1,
+          origin: window.location.origin
         },
         events: {
           onReady: (event: any) => {

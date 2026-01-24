@@ -170,7 +170,7 @@ const App: React.FC = () => {
         const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
         console.log("DEBUG: Searching YouTube for:", text);
         const response = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(text)}&type=video&maxResults=1&key=${apiKey}`
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(text)}&type=video&videoEmbeddable=true&maxResults=1&key=${apiKey}`
         );
         const data = await response.json();
         console.log("DEBUG: YouTube Search Results:", data);
