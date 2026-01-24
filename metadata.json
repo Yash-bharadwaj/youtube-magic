@@ -1,0 +1,8 @@
+{
+  "name": "Enigma Notes",
+  "description": "A high-end, minimalist magic application that seamlessly transitions from a note-taking app to a synchronized YouTube reveal.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
