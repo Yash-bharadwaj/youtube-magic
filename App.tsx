@@ -19,6 +19,7 @@ const App: React.FC = () => {
   const [isFaceDown, setIsFaceDown] = useState(false);
   const [isReadyForReveal, setIsReadyForReveal] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [isUnmuted, setIsUnmuted] = useState(false);
   
   // New States
   const [roomId, setRoomId] = useState<string>('');
@@ -108,6 +109,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (state === AppState.WAITING_FOR_FLIP && isReadyForReveal && !isFaceDown && roomState?.status === 'revealed') {
       setState(AppState.REVEAL);
+      setIsUnmuted(true);
     }
   }, [isFaceDown, isReadyForReveal, state, roomState]);
 
@@ -331,6 +333,7 @@ const App: React.FC = () => {
         <YouTubePlayer 
           videoId={roomState?.videoId || null} 
           isVisible={state === AppState.REVEAL} 
+          isUnmuted={isUnmuted}
           onReady={() => setIsReadyForReveal(true)}
         />
       )}

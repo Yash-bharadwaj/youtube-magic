@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 interface YouTubePlayerProps {
   videoId: string | null;
   isVisible: boolean;
+  isUnmuted: boolean;
   onReady?: () => void;
 }
 
@@ -14,7 +15,7 @@ declare global {
   }
 }
 
-const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, isVisible, onReady }) => {
+const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, isVisible, isUnmuted, onReady }) => {
   const playerRef = useRef<any>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -32,8 +33,8 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, isVisible, onRea
           modestbranding: 1,
           rel: 0,
           showinfo: 0,
-          mute: 1, // Start muted for the "silent reveal" pre-load
-          start: 12,
+          mute: 1, // Always start muted
+          start: 15,
           playsinline: 1
         },
         events: {
@@ -62,21 +63,24 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ videoId, isVisible, onRea
     if (isInitialized && videoId) {
       playerRef.current.loadVideoById({
         videoId: videoId,
-        startSeconds: 12,
+        startSeconds: 15,
         suggestedQuality: 'hd720'
       });
-      // Keep it muted until it's actually visible/revealed
+      // Ensure it starts playing muted
       playerRef.current.mute();
+      playerRef.current.playVideo();
     }
   }, [isInitialized, videoId]);
 
   useEffect(() => {
-    if (isInitialized && isVisible && playerRef.current) {
+    if (isInitialized && isUnmuted && playerRef.current) {
       playerRef.current.unMute();
       playerRef.current.setVolume(100);
       playerRef.current.playVideo();
+    } else if (isInitialized && !isUnmuted && playerRef.current) {
+      playerRef.current.mute();
     }
-  }, [isInitialized, isVisible]);
+  }, [isInitialized, isUnmuted]);
 
   return (
     <div 
