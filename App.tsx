@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { AppState, DeviceOS, UserRole, RoomState } from './types';
 import NotesInterface from './components/NotesInterface';
-import YouTubePlayer from './components/YouTubePlayer';
 import Login from './components/Login';
 import AdminDashboard from './components/AdminDashboard';
 import MagicianPanel from './components/MagicianPanel';
@@ -17,9 +16,7 @@ const App: React.FC = () => {
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [songQuery, setSongQuery] = useState('');
   const [isFaceDown, setIsFaceDown] = useState(false);
-  const [isReadyForReveal, setIsReadyForReveal] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
-  const [isUnmuted, setIsUnmuted] = useState(false);
   const wakeLockRef = React.useRef<any>(null);
   
   // New States
@@ -138,11 +135,26 @@ const App: React.FC = () => {
 
   // Flip detection for reveal (If magician armed the room)
   useEffect(() => {
-    if (state === AppState.WAITING_FOR_FLIP && isReadyForReveal && !isFaceDown && roomState?.status === 'revealed') {
+    if (state === AppState.WAITING_FOR_FLIP && !isFaceDown && roomState?.status === 'revealed' && roomState?.videoId) {
+      // Open YouTube app/website instead of embedded player
+      const videoId = roomState.videoId;
+      const startTime = 15;
+      
+      // Try to open in YouTube app first (mobile), fallback to web
+      const youtubeAppUrl = `youtube://watch?v=${videoId}&t=${startTime}s`;
+      const youtubeWebUrl = `https://www.youtube.com/watch?v=${videoId}&t=${startTime}s`;
+      
+      // Attempt to open in YouTube app
+      window.location.href = youtubeAppUrl;
+      
+      // Fallback to web after a short delay if app doesn't open
+      setTimeout(() => {
+        window.open(youtubeWebUrl, '_blank');
+      }, 500);
+      
       setState(AppState.REVEAL);
-      setIsUnmuted(true);
     }
-  }, [isFaceDown, isReadyForReveal, state, roomState]);
+  }, [isFaceDown, state, roomState]);
 
   const handleLogin = (user: any) => {
     const role = (user.role || 'PERFORMER') as UserRole;
@@ -193,7 +205,7 @@ const App: React.FC = () => {
       try {
         const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
         const response = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(text)}&type=video&videoEmbeddable=true&maxResults=1&key=${apiKey}`
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(text)}&type=video&videoEmbeddable=true&videoDuration=medium&maxResults=1&key=${apiKey}`
         );
         const data = await response.json();
         
@@ -387,23 +399,21 @@ const App: React.FC = () => {
           onClose={() => setShowMagicianPanel(false)} 
         />
       )}
-
-      {(state === AppState.WAITING_FOR_FLIP || state === AppState.REVEAL) && (
-        <YouTubePlayer 
-          videoId={roomState?.videoId || null} 
-          isVisible={state === AppState.REVEAL} 
-          isUnmuted={isUnmuted}
-          onReady={() => setIsReadyForReveal(true)}
-        />
-      )}
       
       {state === AppState.REVEAL && (
-        <button 
-          onClick={() => window.location.reload()}
-          className="fixed bottom-12 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-[0.5em] text-white/5 z-[100] hover:text-white/20 transition-colors"
-        >
-          Reset Session
-        </button>
+        <div className="flex flex-col items-center justify-center h-screen bg-black text-white p-8">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold mb-4">Opening in YouTube...</h2>
+            <p className="text-sm text-white/60">If YouTube doesn't open automatically,</p>
+            <p className="text-sm text-white/60">check your browser's popup settings.</p>
+          </div>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-8 px-6 py-3 bg-white/10 rounded-xl text-sm uppercase tracking-widest hover:bg-white/20 transition-all"
+          >
+            Reset Session
+          </button>
+        </div>
       )}
     </div>
   );

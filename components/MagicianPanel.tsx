@@ -26,7 +26,7 @@ const MagicianPanel: React.FC<MagicianPanelProps> = ({ roomId, currentOs, onOsCh
       const response = await fetch(
         `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
           query
-        )}&type=video&videoEmbeddable=true&maxResults=1&key=${apiKey}`
+        )}&type=video&videoEmbeddable=true&videoDuration=medium&maxResults=1&key=${apiKey}`
       );
       const data = await response.json();
       
@@ -58,7 +58,7 @@ const MagicianPanel: React.FC<MagicianPanelProps> = ({ roomId, currentOs, onOsCh
       const response = await fetch(
         `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
           searchQuery
-        )}&type=video&videoEmbeddable=true&maxResults=5&key=${apiKey}`
+        )}&type=video&videoEmbeddable=true&videoDuration=medium&maxResults=5&key=${apiKey}`
       );
       const data = await response.json();
       
