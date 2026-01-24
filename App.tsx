@@ -50,7 +50,13 @@ const App: React.FC = () => {
       console.log("DEBUG: Room State Update Received:", newState);
       setRoomState(newState);
       
-      // Sync state with Firestore
+      // Sync state with Firestore - BUT ONLY FOR SPECTATORS
+      // If we are a performer, we don't want our own phone to trigger the reveal UI
+      if (userRole === 'PERFORMER') {
+        console.log("DEBUG: Performer role detected, ignoring remote state transition");
+        return;
+      }
+
       if (newState.status === 'revealed') {
         console.log("DEBUG: Status changed to REVEALED");
         setState(AppState.REVEAL);
@@ -124,9 +130,17 @@ const App: React.FC = () => {
     }
   }, [isFaceDown, isReadyForReveal, state, roomState]);
 
-  const handleLogin = (username: string, role: UserRole) => {
+  const handleLogin = (user: any) => {
+    const role = (user.role || 'PERFORMER') as UserRole;
     console.log("App handleLogin called with role:", role);
     setUserRole(role);
+    
+    // If it's a performer, set the roomId to their specific slug
+    if (role === 'PERFORMER' && user.slug) {
+      console.log(`Setting Room ID for Performer: ${user.slug}`);
+      setRoomId(user.slug);
+    }
+
     if (role === 'ADMIN') {
       console.log("Switching to Admin Dashboard state");
       setState(AppState.ADMIN_DASHBOARD);

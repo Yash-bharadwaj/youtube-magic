@@ -5,7 +5,7 @@ import { UserRole } from '../types';
 import { getAllPerformers } from '../services/firestoreService';
 
 interface LoginProps {
-  onLogin: (username: string, role: UserRole) => void;
+  onLogin: (user: any) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
@@ -35,9 +35,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       
       if (user) {
         console.log("✅ Match found! Role:", user.role || 'PERFORMER');
-        onLogin(username, (user.role || 'PERFORMER') as UserRole);
+        onLogin(user);
       } else if (username === 'admin' && password === 'admin') {
-        onLogin(username, 'ADMIN');
+        onLogin({ username: 'admin', role: 'ADMIN', slug: 'admin-room' });
       } else {
         console.log("❌ No match found in", performers.length, "performers");
         setError('Invalid credentials or system offline.');
