@@ -365,21 +365,21 @@ const App: React.FC = () => {
 
       case AppState.REVEAL:
         return (
-          <div className="relative h-screen w-full overflow-hidden">
+          <div className="relative h-screen w-full overflow-hidden bg-black">
             {roomState?.videoId && (
               <iframe
-                src={`https://www.youtube.com/watch?v=${roomState.videoId}&t=15s&autoplay=1`}
+                src={`https://www.youtube.com/embed/${roomState.videoId}?autoplay=1&start=15&controls=1&modestbranding=0&rel=1&showinfo=1&fs=1&playsinline=0`}
                 className="absolute inset-0 w-full h-full border-0"
-                allow="autoplay; fullscreen"
+                allow="autoplay; fullscreen; picture-in-picture"
                 allowFullScreen
                 title="YouTube Video"
               />
             )}
             <button 
               onClick={() => window.location.reload()}
-              className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 bg-black/80 text-white text-xs uppercase tracking-widest rounded-lg hover:bg-black transition-all"
+              className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 bg-black/90 text-white text-xs uppercase tracking-widest rounded-lg hover:bg-black transition-all border border-white/20"
             >
-              Reset
+              End Session
             </button>
           </div>
         );
