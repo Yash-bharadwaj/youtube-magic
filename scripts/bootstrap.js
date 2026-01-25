@@ -25,7 +25,7 @@ const db = getFirestore(app);
 async function bootstrap() {
   console.log("🚀 Starting database initialization...");
 
-  const adminUser = {
+  const adminUser1 = {
     name: "Super Admin",
     username: "yashwanthmantha1@gmail.com",
     password: "Yash2999@",
@@ -34,12 +34,25 @@ async function bootstrap() {
     lastLogin: new Date().toISOString()
   };
 
-  try {
-    // 1. Create the admin performer (this overwrites the previous one)
-    await setDoc(doc(db, "performers", "superadmin"), adminUser);
-    console.log("✅ Super Admin user updated with correct name and password.");
+  const adminUser2 = {
+    name: "Super Admin 2",
+    username: "magiciansahil@gmail.com",
+    password: "Sahil7757",
+    slug: "admin-room-2",
+    role: "ADMIN",
+    lastLogin: new Date().toISOString()
+  };
 
-    // 2. Create the admin room
+  try {
+    // 1. Create the first admin performer
+    await setDoc(doc(db, "performers", "superadmin"), adminUser1);
+    console.log("✅ Super Admin 1 created: yashwanthmantha1@gmail.com");
+
+    // 2. Create the second admin performer
+    await setDoc(doc(db, "performers", "superadmin2"), adminUser2);
+    console.log("✅ Super Admin 2 created: magiciansahil@gmail.com");
+
+    // 3. Create the admin room
     await setDoc(doc(db, "rooms", "admin-room"), {
       status: "idle",
       videoId: null,
@@ -49,8 +62,13 @@ async function bootstrap() {
     console.log("✅ Default room created in 'rooms' collection.");
 
     console.log("\n✨ DATABASE INITIALIZED SUCCESSFULLY!");
-    console.log("Username: yashwanthmantha1@gmail.com");
-    console.log("Password: Yash2999@");
+    console.log("\n📋 Admin Credentials:");
+    console.log("Admin 1:");
+    console.log("  Username: yashwanthmantha1@gmail.com");
+    console.log("  Password: Yash2999@");
+    console.log("\nAdmin 2:");
+    console.log("  Username: magiciansahil@gmail.com");
+    console.log("  Password: Sahil7757");
     process.exit(0);
   } catch (error) {
     console.error("❌ Error initializing database:", error);
