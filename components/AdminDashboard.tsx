@@ -5,6 +5,7 @@ import { PerformerUser } from '../types';
 import { getAllPerformers, createPerformer, deletePerformer } from '../services/firestoreService';
 import ConfirmDialog from './ConfirmDialog';
 import Toast, { ToastType } from './Toast';
+import WelcomeDialog from './WelcomeDialog';
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -31,6 +32,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   // Dialog State
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [performerToDelete, setPerformerToDelete] = useState<{id: string, slug: string} | null>(null);
+  
+  // Welcome Dialog State
+  const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
+  const [newPerformerData, setNewPerformerData] = useState<{
+    name: string;
+    email: string;
+    password: string;
+    spectatorLink: string;
+  } | null>(null);
 
   // Toast State
   const [toast, setToast] = useState<{ isVisible: boolean, message: string, type: ToastType }>({
@@ -124,13 +134,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     try {
       await createPerformer(newUser);
       await fetchPerformers();
+      
+      // Show welcome dialog with user details
+      setNewPerformerData({
+        name: newUser.name,
+        email: newUser.username,
+        password: newUser.password,
+        spectatorLink: `${window.location.origin}/${newUser.slug}`
+      });
+      setShowWelcomeDialog(true);
+      
       setNewName('');
       setNewUsername('');
       setNewPassword('');
       setNewSlug('');
       setFormErrors({});
       setShowAddForm(false);
-      showToast('Performer created successfully');
     } catch (error) {
       console.error("Error creating performer:", error);
       showToast('Failed to create performer', 'error');
@@ -549,6 +568,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
         type={toast.type}
         onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
       />
+
+      {newPerformerData && (
+        <WelcomeDialog
+          isOpen={showWelcomeDialog}
+          performerName={newPerformerData.name}
+          loginEmail={newPerformerData.email}
+          password={newPerformerData.password}
+          spectatorLink={newPerformerData.spectatorLink}
+          onClose={() => {
+            setShowWelcomeDialog(false);
+            setNewPerformerData(null);
+          }}
+        />
+      )}
     </div>
   );
 };
