@@ -33,7 +33,7 @@ const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
 
 🚨 IMPORTANT — Login after adding to Home Screen🚨
 
-Welcome ${performerName}! Thank you for purchasing Googly — get ready to blow minds with this amazing tool!
+Welcome ${performerName}! Thank you for purchasing YoutubeMagic — get ready to blow minds with this amazing tool!
 
 Android installation
 	1.	Open this link in Chrome: ${loginUrl}
@@ -86,7 +86,7 @@ Password: ${password}`;
               <div>
                 <h3 className="text-sm font-bold text-red-400 mb-1">IMPORTANT — Login after adding to Home Screen</h3>
                 <p className="text-xs text-white/60 leading-relaxed">
-                  Welcome {performerName}! Thank you for purchasing Googly — get ready to blow minds with this amazing tool!
+                  Welcome {performerName}! Thank you for purchasing YoutubeMagic — get ready to blow minds with this amazing tool!
                 </p>
               </div>
             </div>
