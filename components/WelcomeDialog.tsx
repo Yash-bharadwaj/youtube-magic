@@ -1,5 +1,5 @@
-import React from 'react';
-import { X, CheckCircle, Copy, Smartphone, Globe } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, CheckCircle, Copy, Smartphone, Globe, CopyCheck } from 'lucide-react';
 
 interface WelcomeDialogProps {
   isOpen: boolean;
@@ -18,11 +18,39 @@ const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
   spectatorLink,
   onClose
 }) => {
+  const [copiedAll, setCopiedAll] = useState(false);
+
   if (!isOpen) return null;
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
-    // You could add a toast here if needed
+  };
+
+  const copyCompleteMessage = () => {
+    const loginUrl = `${window.location.origin}/login`;
+    
+    const completeMessage = `✅ ${performerName}
+
+🚨 IMPORTANT — Login after adding to Home Screen🚨
+
+Welcome ${performerName}! Thank you for purchasing Googly — get ready to blow minds with this amazing tool!
+
+Android installation
+	1.	Open this link in Chrome: ${loginUrl}
+	2.	Tap the 3 dots (top-right) → Add to Home Screen
+	3.	Tap Install, wait a few seconds, the app will appear on your home screen.
+
+iPhone installation
+	1.	Open Safari and go to: ${loginUrl}
+	2.	Tap the Share icon
+	3.	Scroll → Add to Home Screen
+
+Login ID: ${loginEmail}
+Password: ${password}`;
+
+    navigator.clipboard.writeText(completeMessage);
+    setCopiedAll(true);
+    setTimeout(() => setCopiedAll(false), 2000);
   };
 
   const loginUrl = `${window.location.origin}/login`;
@@ -151,12 +179,28 @@ const WelcomeDialog: React.FC<WelcomeDialogProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-[#1c1c1e] border-t border-white/10 p-6">
+        <div className="sticky bottom-0 bg-[#1c1c1e] border-t border-white/10 p-6 space-y-3">
+          <button
+            onClick={copyCompleteMessage}
+            className="w-full py-3 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-all active:scale-95 flex items-center justify-center gap-2"
+          >
+            {copiedAll ? (
+              <>
+                <CopyCheck size={18} />
+                <span>Copied to Clipboard!</span>
+              </>
+            ) : (
+              <>
+                <Copy size={18} />
+                <span>Copy Complete Message</span>
+              </>
+            )}
+          </button>
           <button
             onClick={onClose}
-            className="w-full py-3 bg-white text-black rounded-xl text-sm font-semibold hover:bg-white/90 transition-all active:scale-95"
+            className="w-full py-3 bg-white/10 text-white rounded-xl text-sm font-semibold hover:bg-white/20 transition-all active:scale-95"
           >
-            Got it, Close
+            Close
           </button>
         </div>
       </div>
