@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Youtube, Lock, User, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { UserRole } from '../types';
 import { getAllPerformers } from '../services/firestoreService';
@@ -12,8 +12,48 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Check for saved credentials on mount
+  useEffect(() => {
+    const savedCredentials = localStorage.getItem('rememberedCredentials');
+    if (savedCredentials) {
+      try {
+        const { username: savedUsername, password: savedPassword } = JSON.parse(savedCredentials);
+        setUsername(savedUsername);
+        setPassword(savedPassword);
+        setRememberMe(true);
+        // Auto-login if credentials are saved
+        handleAutoLogin(savedUsername, savedPassword);
+      } catch (e) {
+        console.error('Error loading saved credentials:', e);
+      }
+    }
+  }, []);
+
+  const handleAutoLogin = async (savedUsername: string, savedPassword: string) => {
+    try {
+      const performers = await getAllPerformers();
+      const trimmedUsername = savedUsername.trim().toLowerCase();
+      const trimmedPassword = savedPassword.trim();
+      
+      const user = performers.find(p => {
+        const dbUsername = p.username.trim().toLowerCase();
+        const dbPassword = (p as any).password || '';
+        return dbUsername === trimmedUsername && dbPassword === trimmedPassword;
+      });
+      
+      if (user) {
+        onLogin(user);
+      } else if (savedUsername === 'admin' && savedPassword === 'admin') {
+        onLogin({ username: 'admin', role: 'ADMIN', slug: 'admin-room' });
+      }
+    } catch (err) {
+      console.error("Auto-login error:", err);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,8 +72,26 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       });
       
       if (user) {
+        // Save credentials if "Remember Me" is checked
+        if (rememberMe) {
+          localStorage.setItem('rememberedCredentials', JSON.stringify({
+            username: trimmedUsername,
+            password: trimmedPassword
+          }));
+        } else {
+          localStorage.removeItem('rememberedCredentials');
+        }
         onLogin(user);
       } else if (username === 'admin' && password === 'admin') {
+        // Save credentials if "Remember Me" is checked
+        if (rememberMe) {
+          localStorage.setItem('rememberedCredentials', JSON.stringify({
+            username: 'admin',
+            password: 'admin'
+          }));
+        } else {
+          localStorage.removeItem('rememberedCredentials');
+        }
         onLogin({ username: 'admin', role: 'ADMIN', slug: 'admin-room' });
       } else {
         setError('Invalid credentials or system offline.');
@@ -52,8 +110,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.1)] mb-4">
           <Youtube className="text-[#FF0000] w-9 h-9 fill-current" />
         </div>
-        <h1 className="text-[10px] font-bold tracking-[0.6em] uppercase text-white/40">
-          Enigma Cloud Sync
+        <h1 className="text-sm font-semibold text-white tracking-tight">
+          YoutubeMagic
         </h1>
       </div>
 
@@ -90,6 +148,20 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </div>
         </div>
 
+        {/* Remember Me Checkbox */}
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="rememberMe"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            className="w-4 h-4 rounded border-white/20 bg-white/5 text-white focus:ring-2 focus:ring-white/20 cursor-pointer"
+          />
+          <label htmlFor="rememberMe" className="text-xs text-white/60 cursor-pointer">
+            Remember me
+          </label>
+        </div>
+
         {error && <p className="text-red-500/60 text-[10px] uppercase tracking-widest animate-pulse">{error}</p>}
 
         <button
@@ -107,12 +179,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           )}
         </button>
       </form>
-
-      <div className="mt-16 text-[9px] font-bold tracking-[0.4em] text-white/10 flex gap-4 uppercase">
-        <span>Region: EU-West</span>
-        <span>•</span>
-        <span>Status: Nominal</span>
-      </div>
     </div>
   );
 };

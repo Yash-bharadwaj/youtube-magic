@@ -57,6 +57,17 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // Auto-login if credentials are saved
+  useEffect(() => {
+    if (state === AppState.LOGIN && !userRole) {
+      const savedCredentials = localStorage.getItem('rememberedCredentials');
+      if (savedCredentials) {
+        // The Login component will handle auto-login
+        // This just ensures we're on the login page
+      }
+    }
+  }, [state, userRole]);
+
   // Room Listener
   useEffect(() => {
     if (!roomId) return;
