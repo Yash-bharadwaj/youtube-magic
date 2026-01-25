@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Youtube, Lock, User, Loader2, ArrowRight } from 'lucide-react';
+import { Youtube, Lock, User, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { UserRole } from '../types';
 import { getAllPerformers } from '../services/firestoreService';
 
@@ -11,6 +11,7 @@ interface LoginProps {
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -72,13 +73,20 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 w-4 h-4" />
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Your Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-xs tracking-widest outline-none focus:border-white/30 transition-all placeholder:text-white/10 text-white normal-case"
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-12 text-xs tracking-widest outline-none focus:border-white/30 transition-all placeholder:text-white/10 text-white normal-case"
               autoComplete="current-password"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
           </div>
         </div>
 
