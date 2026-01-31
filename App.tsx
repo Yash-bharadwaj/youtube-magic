@@ -39,11 +39,11 @@ const App: React.FC = () => {
       setRoomId('admin-room');
       setState(AppState.LOGIN);
     } else {
-      // Any other path is treated as a spectator room slug
+      // Any other path is treated as a spectator room slug — go straight to YouTube loading page
       setRoomId(path);
-      setState(AppState.WELCOME);
+      setState(AppState.MUTE_CHECK);
       
-      // Auto-reset the room when spectator lands on WELCOME page
+      // Auto-reset the room when spectator lands
       // This ensures a fresh start for each performance
       const resetRoomOnLoad = async () => {
         try {
@@ -67,6 +67,22 @@ const App: React.FC = () => {
       }
     }
   }, [state, userRole]);
+
+  // Performer on WELCOME (e.g. after finishing a trick): auto-go to notes with detected OS
+  useEffect(() => {
+    if (state !== AppState.WELCOME || userRole !== 'PERFORMER' || !roomId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { updateRoomStatus } = await import('./services/firestoreService');
+        await updateRoomStatus(roomId, 'armed');
+      } catch (e) {
+        console.error('Error arming room:', e);
+      }
+      if (!cancelled) setState(AppState.NOTES);
+    })();
+    return () => { cancelled = true; };
+  }, [state, userRole, roomId]);
 
   // Room Listener
   useEffect(() => {
@@ -152,23 +168,45 @@ const App: React.FC = () => {
     }
   }, [isFaceDown, state, roomState]);
 
+  // When spectator is on REVEAL (video), back button should go to Google (or referrer), not login/performer
+  useEffect(() => {
+    if (state !== AppState.REVEAL || userRole) return; // only for spectators
+    history.pushState({ reveal: true }, '', window.location.pathname + window.location.search);
+    const onPopState = () => {
+      const ref = document.referrer;
+      const isExternal = ref && !ref.includes(window.location.host);
+      window.location.href = isExternal ? ref : 'https://www.google.com';
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [state, userRole]);
+
   const handleLogin = (user: any) => {
     const role = (user.role || 'PERFORMER') as UserRole;
     setUserRole(role);
-    
-    // If it's a performer, set the roomId to their specific slug
-    if (role === 'PERFORMER' && user.slug) {
-      setRoomId(user.slug);
-    }
 
     if (role === 'ADMIN') {
       setState(AppState.ADMIN_DASHBOARD);
-    } else {
-      setState(AppState.WELCOME);
+      return;
     }
+    if (role === 'PERFORMER' && user.slug) {
+      setRoomId(user.slug);
+      setState(AppState.NOTES); // OS already detected; go straight to notes
+      (async () => {
+        try {
+          const { updateRoomStatus } = await import('./services/firestoreService');
+          await updateRoomStatus(user.slug, 'armed');
+        } catch (e) {
+          console.error('Error arming room:', e);
+        }
+      })();
+      return;
+    }
+    setState(AppState.WELCOME);
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('rememberedCredentials');
     setUserRole(null);
     setState(AppState.LOGIN);
   };
@@ -239,18 +277,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handlePerformerNotesSelect = async (selectedOs: DeviceOS) => {
-    setOs(selectedOs);
-    setState(AppState.NOTES);
-    // Arm the room so the spectator sees the YouTube Loading screen
-    try {
-      const { updateRoomStatus } = await import('./services/firestoreService');
-      await updateRoomStatus(roomId, 'armed');
-    } catch (e) {
-      console.error("Error arming room:", e);
-    }
-  };
-
   const renderContent = () => {
     switch (state) {
       case AppState.LOGIN:
@@ -261,38 +287,10 @@ const App: React.FC = () => {
 
       case AppState.WELCOME:
         if (userRole === 'PERFORMER') {
+          // Performer: auto-redirect to notes (OS already detected). Brief placeholder while effect runs.
           return (
-            <div className="flex flex-col items-center justify-center h-screen px-8 py-16 text-center animate-in fade-in duration-1000 bg-[#050505]">
-              <h2 className="text-xl font-bold tracking-tighter uppercase mb-4">Select Your Notes App</h2>
-              <p className="text-xs text-white/40 mb-12 max-w-[280px]">
-                Choose the notes app that matches your device: Google Keep for Android or Apple Notes for iOS
-              </p>
-              <div className="grid grid-cols-2 gap-6 w-full max-w-[320px]">
-                <button 
-                  onClick={() => handlePerformerNotesSelect('ios')}
-                  className="flex flex-col items-center gap-4 p-6 bg-white/5 border border-white/10 rounded-3xl active:scale-95 transition-all"
-                >
-                  <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-xl">
-                    <div className="w-8 h-8 bg-yellow-500 rounded-md" />
-                  </div>
-                  <span className="text-[10px] font-bold tracking-widest uppercase text-white/40">iOS Notes</span>
-                </button>
-                <button 
-                  onClick={() => handlePerformerNotesSelect('android')}
-                  className="flex flex-col items-center gap-4 p-6 bg-white/5 border border-white/10 rounded-3xl active:scale-95 transition-all"
-                >
-                  <div className="w-16 h-16 bg-[#202124] rounded-2xl flex items-center justify-center shadow-xl border border-white/5">
-                    <div className="w-8 h-8 bg-yellow-600 rounded-full" />
-                  </div>
-                  <span className="text-[10px] font-bold tracking-widest uppercase text-white/40">Keep</span>
-                </button>
-              </div>
-              <button 
-                onClick={handleLogout}
-                className="mt-16 text-[9px] font-bold tracking-[0.4em] text-white/10 hover:text-white/30 transition-colors uppercase"
-              >
-                Logout Performer
-              </button>
+            <div className="flex flex-col items-center justify-center h-screen bg-[#050505]">
+              <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
             </div>
           );
         }
@@ -382,14 +380,12 @@ const App: React.FC = () => {
         return (
           <div className="relative h-screen w-full overflow-hidden bg-black flex items-center justify-center">
             {roomState?.videoId && (
-              <div className="w-full max-w-4xl aspect-video">
-                <iframe
-                  src={`https://www.youtube.com/embed/${roomState.videoId}?autoplay=1&mute=1&start=15&controls=1&modestbranding=0&rel=1&showinfo=1&fs=0&playsinline=1`}
-                  className="w-full h-full border-0 rounded-lg"
-                  allow="autoplay; picture-in-picture"
-                  title="YouTube Video"
-                />
-              </div>
+              <iframe
+                src={`https://www.youtube.com/embed/${roomState.videoId}?autoplay=1&mute=1&start=${roomState.startAt ?? 15}&controls=1&modestbranding=0&rel=1&playsinline=1`}
+                className="absolute inset-0 w-full h-full border-0"
+                allow="autoplay; picture-in-picture"
+                title="YouTube Video"
+              />
             )}
           </div>
         );
