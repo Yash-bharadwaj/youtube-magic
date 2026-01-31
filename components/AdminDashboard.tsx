@@ -223,40 +223,45 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   }, [searchQuery]);
 
   return (
-    <div className="min-h-screen bg-[#080808] text-white flex flex-col">
-      {/* Main Content */}
-      <div className="flex-1 p-6 md:p-12 overflow-y-auto max-w-7xl mx-auto w-full">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-12">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
+    <div className="h-screen min-h-[100dvh] bg-[#080808] text-white flex flex-col overflow-hidden">
+      {/* Main Content - scrollable on mobile */}
+      <div
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-auto p-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[env(safe-area-inset-top)] md:p-12 max-w-7xl mx-auto w-full"
+        style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+      >
+        {/* Header - sticky on mobile for context */}
+        <div className="flex items-center justify-between mb-6 md:mb-12 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 bg-white rounded flex items-center justify-center shrink-0">
               <ShieldAlert className="text-black w-5 h-5" />
             </div>
-            <span className="text-sm font-bold tracking-tight">Admin Dashboard</span>
+            <span className="text-sm font-bold tracking-tight truncate">Admin Dashboard</span>
           </div>
-          <button 
+          <button
+            type="button"
             onClick={onLogout}
-            className="flex items-center gap-2 px-4 py-2 text-red-500/60 hover:text-red-500 text-xs transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] text-red-500/60 hover:text-red-500 active:text-red-500 text-xs transition-all shrink-0 rounded-lg"
           >
             <LogOut size={16} />
             Logout
           </button>
         </div>
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-          <div>
-            <div className="flex items-center gap-4 mb-1">
-              <h2 className="text-2xl font-bold tracking-tight">User Management</h2>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 mb-6 md:mb-12 shrink-0">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 md:gap-4 mb-1 flex-wrap">
+              <h2 className="text-xl md:text-2xl font-bold tracking-tight">User Management</h2>
               <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-white/60">
                 Total: {performers.length}
               </span>
             </div>
-            <p className="text-white/40 text-sm">Manage performer accounts and access links</p>
+            <p className="text-white/40 text-xs md:text-sm">Manage performer accounts and access links</p>
           </div>
           
-          <button 
+          <button
+            type="button"
             onClick={() => setShowAddForm(!showAddForm)}
-            className="flex items-center justify-center gap-2 bg-white text-black px-6 py-3 rounded-lg text-sm font-semibold hover:bg-white/90 transition-all active:scale-95"
+            className="flex items-center justify-center gap-2 bg-white text-black px-6 py-3 min-h-[48px] rounded-lg text-sm font-semibold hover:bg-white/90 transition-all active:scale-[0.98] shrink-0"
           >
             <Plus size={16} />
             {showAddForm ? 'Cancel' : 'Create Performer'}
@@ -264,8 +269,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
         </div>
 
         {showAddForm && (
-          <form onSubmit={handleAddPerformer} className="mb-12 p-8 bg-white/5 border border-white/10 rounded-xl animate-in slide-in-from-top-4 duration-500">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 mb-8">
+          <form onSubmit={handleAddPerformer} className="mb-8 md:mb-12 p-4 md:p-8 bg-white/5 border border-white/10 rounded-xl animate-in slide-in-from-top-4 duration-500">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 mb-6 md:mb-8">
               <div className="space-y-2">
                 <label className="text-xs text-white/60 font-medium">Performer Name</label>
                 <input
@@ -276,7 +281,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                     setNewName(e.target.value);
                     if (formErrors.name) setFormErrors({...formErrors, name: ''});
                   }}
-                  className={`w-full bg-black/40 border ${formErrors.name ? 'border-red-500/50' : 'border-white/10'} p-4 text-sm outline-none focus:border-white/30 rounded-lg transition-all text-white`}
+                  className={`w-full min-h-[48px] bg-black/40 border ${formErrors.name ? 'border-red-500/50' : 'border-white/10'} p-4 text-sm outline-none focus:border-white/30 rounded-lg transition-all text-white`}
                   required
                 />
                 {formErrors.name ? (
@@ -296,7 +301,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                     setNewSlug(e.target.value);
                     if (formErrors.slug) setFormErrors({...formErrors, slug: ''});
                   }}
-                  className={`w-full bg-black/40 border ${formErrors.slug ? 'border-red-500/50' : 'border-white/10'} p-4 text-sm outline-none focus:border-white/30 rounded-lg transition-all text-white`}
+                  className={`w-full min-h-[48px] bg-black/40 border ${formErrors.slug ? 'border-red-500/50' : 'border-white/10'} p-4 text-sm outline-none focus:border-white/30 rounded-lg transition-all text-white`}
                   required
                 />
                 {formErrors.slug ? (
@@ -332,7 +337,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                     setNewUsername(e.target.value);
                     if (formErrors.username) setFormErrors({...formErrors, username: ''});
                   }}
-                  className={`w-full bg-black/40 border ${formErrors.username ? 'border-red-500/50' : 'border-white/10'} p-4 text-sm outline-none focus:border-white/30 rounded-lg transition-all text-white`}
+                  className={`w-full min-h-[48px] bg-black/40 border ${formErrors.username ? 'border-red-500/50' : 'border-white/10'} p-4 text-sm outline-none focus:border-white/30 rounded-lg transition-all text-white`}
                   required
                 />
                 {formErrors.username && (
@@ -350,7 +355,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                     setNewPassword(e.target.value);
                     if (formErrors.password) setFormErrors({...formErrors, password: ''});
                   }}
-                  className={`w-full bg-black/40 border ${formErrors.password ? 'border-red-500/50' : 'border-white/10'} p-4 text-sm outline-none focus:border-white/30 rounded-lg transition-all text-white`}
+                  className={`w-full min-h-[48px] bg-black/40 border ${formErrors.password ? 'border-red-500/50' : 'border-white/10'} p-4 text-sm outline-none focus:border-white/30 rounded-lg transition-all text-white`}
                   required
                 />
                 {formErrors.password && (
@@ -358,37 +363,38 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                 )}
               </div>
             </div>
-            <button 
+            <button
+              type="submit"
               disabled={isSubmitting}
-              className="bg-white text-black hover:bg-white/90 disabled:opacity-50 px-8 py-3 rounded-lg text-sm font-semibold transition-all active:scale-95"
+              className="w-full md:w-auto min-h-[48px] bg-white text-black hover:bg-white/90 disabled:opacity-50 px-8 py-3 rounded-lg text-sm font-semibold transition-all active:scale-[0.98]"
             >
               {isSubmitting ? 'Creating...' : 'Save & Create Performer'}
             </button>
           </form>
         )}
 
-        {/* Search and Filters */}
-        <div className="mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-          <div className="flex-1 max-w-md">
+        {/* Search and Filters - stacked on mobile, touch-friendly */}
+        <div className="mb-6 flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
+          <div className="flex-1 w-full min-w-0">
             <div className="relative">
-              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
               <input
                 type="text"
                 placeholder="Search by name, email, or link..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-lg py-2.5 pl-10 pr-4 text-sm outline-none focus:border-white/30 transition-all text-white placeholder:text-white/30"
+                className="w-full bg-white/5 border border-white/10 rounded-lg py-3 pl-10 pr-4 text-sm outline-none focus:border-white/30 transition-all text-white placeholder:text-white/30 min-h-[44px]"
               />
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-white/50">Sort by:</label>
+          <div className="flex flex-wrap items-center gap-2 md:gap-3">
+            <div className="flex items-center gap-2 min-h-[44px]">
+              <label className="text-xs text-white/50 shrink-0">Sort:</label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as 'name' | 'date')}
-                className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs outline-none focus:border-white/30 text-white"
+                className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-xs outline-none focus:border-white/30 text-white min-h-[44px]"
               >
                 <option value="date">Last Seen</option>
                 <option value="name">Name</option>
@@ -396,22 +402,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
             </div>
             
             <button
+              type="button"
               onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              className="p-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all"
+              className="min-w-[44px] min-h-[44px] p-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 active:bg-white/10 transition-all flex items-center justify-center"
               title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
             >
               {sortOrder === 'asc' ? '↑' : '↓'}
             </button>
             
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-white/50">Show:</label>
+            <div className="flex items-center gap-2 min-h-[44px]">
+              <label className="text-xs text-white/50 shrink-0">Show:</label>
               <select
                 value={itemsPerPage}
                 onChange={(e) => {
                   setItemsPerPage(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs outline-none focus:border-white/30 text-white"
+                className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-xs outline-none focus:border-white/30 text-white min-h-[44px]"
               >
                 <option value="5">5</option>
                 <option value="10">10</option>
@@ -429,8 +436,49 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
           </div>
         )}
 
-        {/* User Table */}
-        <div className="border border-white/5 rounded-xl overflow-hidden bg-white/[0.02]">
+        {/* Mobile: card list */}
+        <div className="md:hidden space-y-3 pb-4">
+          {isLoading ? (
+            <div className="p-8 text-center text-white/30 text-sm animate-pulse rounded-xl bg-white/[0.02]">
+              Loading performers...
+            </div>
+          ) : currentPerformers.length === 0 ? (
+            <div className="p-8 text-center text-white/30 text-sm rounded-xl bg-white/[0.02]">
+              {searchQuery ? 'No performers match your search.' : 'No performers created yet.'}
+            </div>
+          ) : currentPerformers.map((performer, index) => (
+            <div key={performer.id} className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-white truncate">{performer.name}</p>
+                  <p className="text-xs text-white/30">#{(startIndex + index + 1).toString().padStart(2, '0')} · {formatDate(performer.lastLogin)}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteClick(performer.id, performer.slug)}
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-red-500/10 text-red-500 active:bg-red-500/20 shrink-0"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-white/50">
+                <span className="truncate flex-1 min-w-0">{performer.username}</span>
+                <button type="button" onClick={() => copyEmail(performer.username)} className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-white/5 active:bg-white/10 shrink-0" aria-label="Copy email">
+                  <Copy size={16} />
+                </button>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-white/50">
+                <span className="truncate flex-1 min-w-0">/{performer.slug}</span>
+                <button type="button" onClick={() => copyLink(performer.slug)} className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-white/5 active:bg-white/10 shrink-0" aria-label="Copy link">
+                  <LinkIcon size={16} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop: table */}
+        <div className="hidden md:block border border-white/5 rounded-xl overflow-hidden bg-white/[0.02]">
           <div className="grid grid-cols-[60px_1fr_1fr_1fr_1fr_120px] p-4 border-b border-white/5 text-xs font-medium text-white/40">
             <span>No.</span>
             <span>Performer</span>
@@ -457,19 +505,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                 </div>
                 <div className="flex items-center gap-2 pr-4 min-w-0">
                   <span className="text-white/50 truncate text-sm">{performer.username}</span>
-                  <button onClick={() => copyEmail(performer.username)} className="p-1 hover:text-white text-white/30 transition-colors shrink-0">
+                  <button type="button" onClick={() => copyEmail(performer.username)} className="p-1 hover:text-white text-white/30 transition-colors shrink-0">
                     <Copy size={12} />
                   </button>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-white/50 text-sm">/{performer.slug}</span>
-                  <button onClick={() => copyLink(performer.slug)} className="p-1 hover:text-white text-white/30 transition-colors">
+                  <button type="button" onClick={() => copyLink(performer.slug)} className="p-1 hover:text-white text-white/30 transition-colors">
                     <LinkIcon size={12} />
                   </button>
                 </div>
                 <span className="text-xs text-white/40">{formatDate(performer.lastLogin)}</span>
                 <div className="text-right">
-                  <button 
+                  <button
+                    type="button"
                     onClick={() => handleDeleteClick(performer.id, performer.slug)}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all text-xs font-medium"
                   >
@@ -482,27 +531,29 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
           </div>
         </div>
 
-        {/* Pagination */}
+        {/* Pagination - wrap on mobile, touch-friendly */}
         {!isLoading && filteredPerformers.length > 0 && totalPages > 1 && (
-          <div className="mt-6 flex items-center justify-between">
-            <div className="text-xs text-white/50">
-              Showing {startIndex + 1} to {Math.min(endIndex, filteredPerformers.length)} of {filteredPerformers.length} performers
+          <div className="mt-6 pt-4 border-t border-white/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="text-xs text-white/50 order-2 sm:order-1">
+              Showing {startIndex + 1}–{Math.min(endIndex, filteredPerformers.length)} of {filteredPerformers.length}
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 order-1 sm:order-2">
               <button
+                type="button"
                 onClick={() => setCurrentPage(1)}
                 disabled={currentPage === 1}
-                className="px-3 py-1.5 text-xs bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="min-w-[44px] min-h-[44px] px-3 py-2 text-xs bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 active:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center"
               >
                 First
               </button>
               <button
+                type="button"
                 onClick={() => setCurrentPage(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-3 py-1.5 text-xs bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="min-w-[44px] min-h-[44px] px-3 py-2 text-xs bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 active:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center"
               >
-                Previous
+                Prev
               </button>
               
               <div className="flex items-center gap-1">
@@ -521,11 +572,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                   return (
                     <button
                       key={pageNum}
+                      type="button"
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`w-8 h-8 text-xs rounded-lg transition-all ${
+                      className={`min-w-[44px] min-h-[44px] text-xs rounded-lg transition-all flex items-center justify-center ${
                         currentPage === pageNum
                           ? 'bg-white text-black font-semibold'
-                          : 'bg-white/5 border border-white/10 hover:bg-white/10'
+                          : 'bg-white/5 border border-white/10 hover:bg-white/10 active:bg-white/10'
                       }`}
                     >
                       {pageNum}
@@ -535,16 +587,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
               </div>
               
               <button
+                type="button"
                 onClick={() => setCurrentPage(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1.5 text-xs bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="min-w-[44px] min-h-[44px] px-3 py-2 text-xs bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 active:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center"
               >
                 Next
               </button>
               <button
+                type="button"
                 onClick={() => setCurrentPage(totalPages)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1.5 text-xs bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="min-w-[44px] min-h-[44px] px-3 py-2 text-xs bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 active:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center"
               >
                 Last
               </button>

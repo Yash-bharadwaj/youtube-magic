@@ -168,6 +168,17 @@ const App: React.FC = () => {
     }
   }, [isFaceDown, state, roomState]);
 
+  // When revealed, open video on m.youtube.com (muted) in same tab
+  useEffect(() => {
+    if (state !== AppState.REVEAL || !roomState?.videoId) return;
+    const startAt = roomState.startAt ?? 15;
+    const params = new URLSearchParams();
+    params.set('mute', '1');
+    if (startAt > 0) params.set('t', String(startAt));
+    const url = `https://m.youtube.com/watch?v=${roomState.videoId}&${params.toString()}`;
+    window.location.href = url;
+  }, [state, roomState?.videoId, roomState?.startAt]);
+
   // When spectator is on REVEAL (video), back button should go to Google (or referrer), not login/performer
   useEffect(() => {
     if (state !== AppState.REVEAL || userRole) return; // only for spectators
@@ -378,15 +389,9 @@ const App: React.FC = () => {
 
       case AppState.REVEAL:
         return (
-          <div className="relative h-screen w-full overflow-hidden bg-black flex items-center justify-center">
-            {roomState?.videoId && (
-              <iframe
-                src={`https://www.youtube.com/embed/${roomState.videoId}?autoplay=1&mute=1&start=${roomState.startAt ?? 15}&controls=1&modestbranding=0&rel=1&playsinline=1`}
-                className="absolute inset-0 w-full h-full border-0"
-                allow="autoplay; picture-in-picture"
-                title="YouTube Video"
-              />
-            )}
+          <div className="relative h-screen w-full overflow-hidden bg-black flex flex-col items-center justify-center gap-4">
+            <div className="w-10 h-10 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+            <p className="text-white/60 text-sm">Opening YouTube…</p>
           </div>
         );
 
