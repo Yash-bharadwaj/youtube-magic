@@ -10,6 +10,8 @@ import { DeviceOS } from '../types';
 interface NotesInterfaceProps {
   onDone: (text: string) => void;
   os: DeviceOS;
+  /** Performer room link shown inside each note (editor) for quick reference */
+  performerLink?: string;
 }
 
 interface Note {
@@ -97,7 +99,7 @@ function previewFromNote(note: Note, maxLen: number = 60): string {
   return full.slice(0, maxLen) + '…';
 }
 
-const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os }) => {
+const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os, performerLink = '' }) => {
   const [notes, setNotes] = useState<Note[]>(() => [...DEFAULT_NOTES]);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
 
@@ -465,6 +467,16 @@ const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os }) => {
           </div>
         </div>
         <div className="flex-1 overflow-y-auto px-4 pb-2">
+          {performerLink ? (
+            <button
+              type="button"
+              onClick={() => { navigator.clipboard?.writeText(performerLink); showToastMsg('Link copied'); }}
+              className="w-full text-left text-[12px] leading-[16px] py-2 mb-1 truncate"
+              style={{ color: isLightKeep ? '#1a73e8' : '#8ab4f8' }}
+            >
+              {performerLink}
+            </button>
+          ) : null}
           <input
             ref={titleRef}
             type="text"
@@ -608,6 +620,15 @@ const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os }) => {
         {currentDate}
       </div>
       <div className="flex-1 px-5 pb-4 overflow-y-auto">
+        {performerLink ? (
+          <button
+            type="button"
+            onClick={() => { navigator.clipboard?.writeText(performerLink); showToastMsg('Link copied'); }}
+            className="w-full text-left text-[12px] font-normal leading-[16px] text-[#e5b32a] py-2 mb-1 truncate"
+          >
+            {performerLink}
+          </button>
+        ) : null}
         <input
           ref={titleRef}
           type="text"

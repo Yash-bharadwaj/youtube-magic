@@ -365,7 +365,13 @@ const App: React.FC = () => {
         );
 
       case AppState.NOTES:
-        return <NotesInterface onDone={handleNotesDone} os={os} />;
+        return (
+          <NotesInterface
+            onDone={handleNotesDone}
+            os={os}
+            performerLink={roomId && roomId !== 'default' && roomId !== 'admin-room' ? `${typeof window !== 'undefined' ? window.location.origin : ''}/${roomId}` : ''}
+          />
+        );
 
       case AppState.WAITING_FOR_FLIP:
         return (
