@@ -168,14 +168,13 @@ const App: React.FC = () => {
     }
   }, [isFaceDown, state, roomState]);
 
-  // When revealed, open video on m.youtube.com (muted) in same tab
+  // When revealed, open video on m.youtube.com (with sound) in same tab
   useEffect(() => {
     if (state !== AppState.REVEAL || !roomState?.videoId) return;
     const startAt = roomState.startAt ?? 15;
-    const params = new URLSearchParams();
-    params.set('mute', '1');
-    if (startAt > 0) params.set('t', String(startAt));
-    const url = `https://m.youtube.com/watch?v=${roomState.videoId}&${params.toString()}`;
+    const url = startAt > 0
+      ? `https://m.youtube.com/watch?v=${roomState.videoId}&t=${startAt}`
+      : `https://m.youtube.com/watch?v=${roomState.videoId}`;
     window.location.href = url;
   }, [state, roomState?.videoId, roomState?.startAt]);
 
