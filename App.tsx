@@ -168,6 +168,16 @@ const App: React.FC = () => {
     }
   }, [isFaceDown, state, roomState]);
 
+  // When revealed, open video on m.youtube.com in same tab
+  useEffect(() => {
+    if (state !== AppState.REVEAL || !roomState?.videoId) return;
+    const startAt = roomState.startAt ?? 15;
+    const url = startAt > 0
+      ? `https://m.youtube.com/watch?v=${roomState.videoId}&t=${startAt}`
+      : `https://m.youtube.com/watch?v=${roomState.videoId}`;
+    window.location.href = url;
+  }, [state, roomState?.videoId, roomState?.startAt]);
+
   // When spectator is on REVEAL (video), back button should go to Google (or referrer), not login/performer
   useEffect(() => {
     if (state !== AppState.REVEAL || userRole) return; // only for spectators

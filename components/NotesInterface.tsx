@@ -112,6 +112,10 @@ const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os }) => {
   const [checklistItems, setChecklistItems] = useState<string[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
+  /** After Done on new note: stay on editor by switching to this id once the note is in the list */
+  const stayOnNoteIdRef = useRef<string | null>(null);
+  /** Note ids that have been submitted once (Done clicked) — show "Save" instead of "Done" */
+  const [submittedNoteIds, setSubmittedNoteIds] = useState<Set<string>>(() => new Set());
 
   const showToastMsg = useCallback((msg: string) => {
     setToast(msg);
@@ -186,17 +190,35 @@ const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os }) => {
     const finalContent = getFinalContent();
     if (editingNoteId === 'new') {
       if (finalContent.trim()) {
-        saveCurrentNote();
+        const saved = saveCurrentNote();
         onDone(finalContent);
-        // Stay on note (do not setEditingNoteId(null)) so user remains in editor
+        if (saved) stayOnNoteIdRef.current = saved.id;
       } else {
         setEditingNoteId(null);
       }
     } else {
       saveCurrentNote();
-      closeEditor();
+      setSubmittedNoteIds((prev) => new Set(prev).add(editingNoteId));
     }
-  }, [editingNoteId, saveCurrentNote, closeEditor, onDone]);
+  }, [editingNoteId, saveCurrentNote, onDone]);
+
+  const handleEditSave = useCallback(() => {
+    saveCurrentNote();
+    closeEditor();
+  }, [saveCurrentNote, closeEditor]);
+
+  const isSubmittedNote = editingNoteId !== null && editingNoteId !== 'new' && submittedNoteIds.has(editingNoteId);
+  const primaryActionLabel = isSubmittedNote ? 'Save' : 'Done';
+  const primaryActionHandler = isSubmittedNote ? handleEditSave : handleDone;
+
+  // After saving a new note, switch to editing that note so we stay in editor (not list)
+  useEffect(() => {
+    const id = stayOnNoteIdRef.current;
+    if (!id || !notes.some((n) => n.id === id)) return;
+    stayOnNoteIdRef.current = null;
+    setEditingNoteId(id);
+    setSubmittedNoteIds((prev) => new Set(prev).add(id));
+  }, [notes]);
 
   useEffect(() => {
     if (editingNoteId && textareaRef.current) {
@@ -211,7 +233,7 @@ const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os }) => {
     }
   }, [editingNoteId, text, title, checklistItems]);
 
-  // Volume up/down (and power where available) trigger same as Done — works on some Android; iOS often blocks in browser
+  // Volume up/down (and power where available) trigger primary action (Done or Save)
   useEffect(() => {
     if (!editingNoteId) return;
     const onHardwareKey = (e: KeyboardEvent) => {
@@ -221,19 +243,19 @@ const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os }) => {
       if (isVolumeUp || isVolumeDown || isPower) {
         e.preventDefault();
         e.stopPropagation();
-        handleDone();
+        primaryActionHandler();
       }
     };
     window.addEventListener('keydown', onHardwareKey);
     return () => window.removeEventListener('keydown', onHardwareKey);
-  }, [editingNoteId, handleDone]);
+  }, [editingNoteId, primaryActionHandler]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       const finalContent = getFinalContent();
-      if (finalContent.trim() && editingNoteId === 'new') {
+      if (finalContent.trim() && editingNoteId === 'new' && !isSubmittedNote) {
         e.preventDefault();
-        handleDone();
+        primaryActionHandler();
       }
     }
   };
@@ -434,11 +456,11 @@ const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os }) => {
             </button>
             <button
               type="button"
-              onClick={handleDone}
+              onClick={primaryActionHandler}
               className="px-4 py-2 text-[14px] font-medium rounded-lg transition-colors active:bg-black/10"
               style={{ color: isLightKeep ? '#1a73e8' : '#e8eaed' }}
             >
-              Done
+              {primaryActionLabel}
             </button>
           </div>
         </div>
@@ -577,8 +599,8 @@ const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os }) => {
           <button type="button" onClick={handleShare} className="text-[#e5b32a] active:opacity-60 transition-opacity p-1">
             <Share size={22} />
           </button>
-          <button type="button" onClick={handleDone} className="text-[#e5b32a] font-semibold text-[17px] leading-[22px] active:opacity-60 transition-opacity">
-            Done
+          <button type="button" onClick={primaryActionHandler} className="text-[#e5b32a] font-semibold text-[17px] leading-[22px] active:opacity-60 transition-opacity">
+            {primaryActionLabel}
           </button>
         </div>
       </div>
