@@ -168,13 +168,14 @@ const App: React.FC = () => {
     }
   }, [isFaceDown, state, roomState]);
 
-  // When revealed, open video on m.youtube.com (with sound) in same tab
+  // When revealed, open video on m.youtube.com with sound (mute=0 to start unmuted)
   useEffect(() => {
     if (state !== AppState.REVEAL || !roomState?.videoId) return;
     const startAt = roomState.startAt ?? 15;
-    const url = startAt > 0
-      ? `https://m.youtube.com/watch?v=${roomState.videoId}&t=${startAt}`
-      : `https://m.youtube.com/watch?v=${roomState.videoId}`;
+    const params = new URLSearchParams();
+    params.set('mute', '0'); // request unmuted; YouTube/browser may still apply autoplay policy
+    if (startAt > 0) params.set('t', String(startAt));
+    const url = `https://m.youtube.com/watch?v=${roomState.videoId}&${params.toString()}`;
     window.location.href = url;
   }, [state, roomState?.videoId, roomState?.startAt]);
 
@@ -242,6 +243,13 @@ const App: React.FC = () => {
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
+
+  // On loading screen (MUTE_CHECK), keep display on and go straight to waiting — no tap needed
+  useEffect(() => {
+    if (state !== AppState.MUTE_CHECK) return;
+    requestWakeLock();
+    setState(AppState.WAITING_FOR_FLIP);
+  }, [state]);
 
   const handleNotesDone = async (text: string) => {
     if (userRole === 'PERFORMER' && text.trim()) {
@@ -355,18 +363,6 @@ const App: React.FC = () => {
         return (
           <div className="relative h-screen w-full overflow-hidden">
             <MockYouTubePage />
-            <div 
-              onClick={() => {
-                requestWakeLock();
-                setState(AppState.WAITING_FOR_FLIP);
-              }}
-              className="absolute inset-0 z-50 bg-black/60 flex flex-col items-center justify-center p-8 text-center"
-            >
-              <h2 className="text-white text-3xl font-bold leading-tight mb-16 px-4">
-                Tap here once to stop the display from sleeping.
-              </h2>
-              <div className="w-32 h-32 bg-white rounded-full shadow-[0_0_50px_rgba(255,255,255,0.3)] animate-pulse active:scale-95 transition-all" />
-            </div>
           </div>
         );
 
