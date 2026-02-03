@@ -1,13 +1,19 @@
-
 import React, { useState, useEffect } from 'react';
 import { Download, X, Share } from 'lucide-react';
 
-const InstallPWA: React.FC = () => {
+interface InstallPWAProps {
+  /** When true (e.g. on /{performerId} spectator page), do not show install prompt */
+  hideOnSpectatorPage?: boolean;
+}
+
+const InstallPWA: React.FC<InstallPWAProps> = ({ hideOnSpectatorPage = false }) => {
   const [showPrompt, setShowPrompt] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
+    if (hideOnSpectatorPage) return;
+
     // Check if already installed
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
     if (isStandalone) return;
@@ -38,7 +44,7 @@ const InstallPWA: React.FC = () => {
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-  }, []);
+  }, [hideOnSpectatorPage]);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
@@ -59,7 +65,7 @@ const InstallPWA: React.FC = () => {
     localStorage.setItem('pwa_prompt_shown', 'true');
   };
 
-  if (!showPrompt) return null;
+  if (hideOnSpectatorPage || !showPrompt) return null;
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[1000] w-[90%] max-w-sm animate-in slide-in-from-bottom-10 duration-500">

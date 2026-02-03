@@ -168,16 +168,6 @@ const App: React.FC = () => {
     }
   }, [isFaceDown, state, roomState]);
 
-  // When revealed, open video on m.youtube.com (no mute param — let YouTube use default)
-  useEffect(() => {
-    if (state !== AppState.REVEAL || !roomState?.videoId) return;
-    const startAt = roomState.startAt ?? 15;
-    const url = startAt > 0
-      ? `https://m.youtube.com/watch?v=${roomState.videoId}&t=${startAt}`
-      : `https://m.youtube.com/watch?v=${roomState.videoId}`;
-    window.location.href = url;
-  }, [state, roomState?.videoId, roomState?.startAt]);
-
   // When spectator is on REVEAL (video), back button should go to Google (or referrer), not login/performer
   useEffect(() => {
     if (state !== AppState.REVEAL || userRole) return; // only for spectators
@@ -266,12 +256,11 @@ const App: React.FC = () => {
           
           await setRoomVideo(roomId, videoId, 15);
           await revealVideo(roomId);
-
-          setState(AppState.WELCOME);
+          // Stay in NOTES so performer stays on note screen (no WELCOME → NOTES glitch)
         }
       } catch (error) {
         console.error("YouTube search error:", error);
-        setState(AppState.WELCOME);
+        // Stay in NOTES on error too
       }
     } else {
       setState(AppState.WAITING_FOR_FLIP);
@@ -394,9 +383,11 @@ const App: React.FC = () => {
     }
   };
 
+  const isSpectatorPage = roomId !== '' && roomId !== 'default' && roomId !== 'admin-room';
+
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-white/20 overflow-hidden">
-      <InstallPWA />
+      <InstallPWA hideOnSpectatorPage={isSpectatorPage} />
       {renderContent()}
       
       {showMagicianPanel && (

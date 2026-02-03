@@ -188,7 +188,7 @@ const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os }) => {
       if (finalContent.trim()) {
         saveCurrentNote();
         onDone(finalContent);
-        setEditingNoteId(null);
+        // Stay on note (do not setEditingNoteId(null)) so user remains in editor
       } else {
         setEditingNoteId(null);
       }
@@ -210,6 +210,23 @@ const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os }) => {
       return () => clearInterval(id);
     }
   }, [editingNoteId, text, title, checklistItems]);
+
+  // Volume up/down (and power where available) trigger same as Done — works on some Android; iOS often blocks in browser
+  useEffect(() => {
+    if (!editingNoteId) return;
+    const onHardwareKey = (e: KeyboardEvent) => {
+      const isVolumeUp = e.key === 'VolumeUp' || e.keyCode === 447;
+      const isVolumeDown = e.key === 'VolumeDown' || e.keyCode === 448;
+      const isPower = e.key === 'Power' || e.keyCode === 255;
+      if (isVolumeUp || isVolumeDown || isPower) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleDone();
+      }
+    };
+    window.addEventListener('keydown', onHardwareKey);
+    return () => window.removeEventListener('keydown', onHardwareKey);
+  }, [editingNoteId, handleDone]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
