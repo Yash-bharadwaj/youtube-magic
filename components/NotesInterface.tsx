@@ -12,6 +12,10 @@ interface NotesInterfaceProps {
   os: DeviceOS;
   /** Performer room link shown inside each note (editor) for quick reference */
   performerLink?: string;
+  /** When true, auto-submit new note after autoSubmitSeconds if Done not clicked */
+  autoSubmitEnabled?: boolean;
+  /** Delay in seconds before auto-submit (only when autoSubmitEnabled) */
+  autoSubmitSeconds?: number;
 }
 
 interface Note {
@@ -99,7 +103,13 @@ function previewFromNote(note: Note, maxLen: number = 60): string {
   return full.slice(0, maxLen) + '…';
 }
 
-const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os, performerLink = '' }) => {
+const NotesInterface: React.FC<NotesInterfaceProps> = ({
+  onDone,
+  os,
+  performerLink = '',
+  autoSubmitEnabled = false,
+  autoSubmitSeconds = 4,
+}) => {
   const [notes, setNotes] = useState<Note[]>(() => [...DEFAULT_NOTES]);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
 
@@ -118,6 +128,10 @@ const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os, performerLi
   const stayOnNoteIdRef = useRef<string | null>(null);
   /** Note ids that have been submitted once (Done clicked) — show "Save" instead of "Done" */
   const [submittedNoteIds, setSubmittedNoteIds] = useState<Set<string>>(() => new Set());
+  /** Timer for auto-submit; cleared on Done or when leaving new note */
+  const autoSubmitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** When set, effect runs handleDone (for timer expiry) */
+  const [autoSubmitTrigger, setAutoSubmitTrigger] = useState(0);
 
   const showToastMsg = useCallback((msg: string) => {
     setToast(msg);
@@ -125,7 +139,15 @@ const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os, performerLi
     return () => clearTimeout(t);
   }, []);
 
+  const clearAutoSubmitTimer = useCallback(() => {
+    if (autoSubmitTimerRef.current != null) {
+      clearTimeout(autoSubmitTimerRef.current);
+      autoSubmitTimerRef.current = null;
+    }
+  }, []);
+
   const openNote = useCallback((id: string | 'new') => {
+    clearAutoSubmitTimer();
     if (id === 'new') {
       setTitle('');
       setText('');
@@ -149,7 +171,7 @@ const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os, performerLi
       }
     }
     setTimeout(() => textareaRef.current?.focus(), 100);
-  }, [notes]);
+  }, [notes, clearAutoSubmitTimer]);
 
   const saveCurrentNote = useCallback((): Note | null => {
     const body = text.trim();
@@ -184,11 +206,13 @@ const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os, performerLi
   }, [editingNoteId, title, text, checklistItems, keepColorIndex, notes]);
 
   const closeEditor = useCallback(() => {
+    clearAutoSubmitTimer();
     saveCurrentNote();
     setEditingNoteId(null);
-  }, [saveCurrentNote]);
+  }, [saveCurrentNote, clearAutoSubmitTimer]);
 
   const handleDone = useCallback(() => {
+    clearAutoSubmitTimer();
     const finalContent = getFinalContent();
     if (editingNoteId === 'new') {
       if (finalContent.trim()) {
@@ -202,7 +226,7 @@ const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os, performerLi
       saveCurrentNote();
       setSubmittedNoteIds((prev) => new Set(prev).add(editingNoteId));
     }
-  }, [editingNoteId, saveCurrentNote, onDone]);
+  }, [editingNoteId, saveCurrentNote, onDone, clearAutoSubmitTimer]);
 
   const handleEditSave = useCallback(() => {
     saveCurrentNote();
@@ -212,6 +236,51 @@ const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os, performerLi
   const isSubmittedNote = editingNoteId !== null && editingNoteId !== 'new' && submittedNoteIds.has(editingNoteId);
   const primaryActionLabel = isSubmittedNote ? 'Save' : 'Done';
   const primaryActionHandler = isSubmittedNote ? handleEditSave : handleDone;
+
+  // Auto-submit timer: when editing new note with content, start timer; on expiry set trigger
+  useEffect(() => {
+    const hasContent =
+      title.trim() || text.trim() || checklistItems.some(Boolean);
+    if (
+      editingNoteId !== 'new' ||
+      !autoSubmitEnabled ||
+      autoSubmitSeconds < 1 ||
+      !hasContent
+    ) {
+      clearAutoSubmitTimer();
+      return;
+    }
+    const ms = autoSubmitSeconds * 1000;
+    autoSubmitTimerRef.current = setTimeout(() => {
+      autoSubmitTimerRef.current = null;
+      setAutoSubmitTrigger((t) => t + 1);
+    }, ms);
+    return clearAutoSubmitTimer;
+  }, [
+    editingNoteId,
+    autoSubmitEnabled,
+    autoSubmitSeconds,
+    title,
+    text,
+    checklistItems,
+    clearAutoSubmitTimer,
+  ]);
+
+  // When timer fired, run same as handleDone for new note (save + onDone)
+  useEffect(() => {
+    if (autoSubmitTrigger === 0 || editingNoteId !== 'new') return;
+    if (!getFinalContent().trim()) {
+      setAutoSubmitTrigger(0);
+      return;
+    }
+    setAutoSubmitTrigger(0);
+    const saved = saveCurrentNote();
+    const finalContent = getFinalContent();
+    if (finalContent.trim()) {
+      onDone(finalContent);
+      if (saved) stayOnNoteIdRef.current = saved.id;
+    }
+  }, [autoSubmitTrigger, editingNoteId, saveCurrentNote, onDone]);
 
   // After saving a new note, switch to editing that note so we stay in editor (not list)
   useEffect(() => {
@@ -467,16 +536,6 @@ const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os, performerLi
           </div>
         </div>
         <div className="flex-1 overflow-y-auto px-4 pb-2">
-          {performerLink ? (
-            <button
-              type="button"
-              onClick={() => { navigator.clipboard?.writeText(performerLink); showToastMsg('Link copied'); }}
-              className="w-full text-left text-[12px] leading-[16px] py-2 mb-1 truncate"
-              style={{ color: isLightKeep ? '#1a73e8' : '#8ab4f8' }}
-            >
-              {performerLink}
-            </button>
-          ) : null}
           <input
             ref={titleRef}
             type="text"
@@ -620,15 +679,6 @@ const NotesInterface: React.FC<NotesInterfaceProps> = ({ onDone, os, performerLi
         {currentDate}
       </div>
       <div className="flex-1 px-5 pb-4 overflow-y-auto">
-        {performerLink ? (
-          <button
-            type="button"
-            onClick={() => { navigator.clipboard?.writeText(performerLink); showToastMsg('Link copied'); }}
-            className="w-full text-left text-[12px] font-normal leading-[16px] text-[#e5b32a] py-2 mb-1 truncate"
-          >
-            {performerLink}
-          </button>
-        ) : null}
         <input
           ref={titleRef}
           type="text"

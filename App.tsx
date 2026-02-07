@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { AppState, DeviceOS, UserRole, RoomState } from './types';
 import NotesInterface from './components/NotesInterface';
+import NotesPerformerSettings, { loadAutoSubmitSettings } from './components/NotesPerformerSettings';
 import Login from './components/Login';
 import AdminDashboard from './components/AdminDashboard';
 import MagicianPanel from './components/MagicianPanel';
@@ -24,6 +25,9 @@ const App: React.FC = () => {
   const [roomId, setRoomId] = useState<string>('');
   const [roomState, setRoomState] = useState<RoomState | null>(null);
   const [showMagicianPanel, setShowMagicianPanel] = useState(false);
+
+  // Auto-submit (performer notes): persisted in localStorage
+  const [autoSubmitSettings, setAutoSubmitSettings] = useState(loadAutoSubmitSettings);
 
   // Initialize Room ID from URL
   useEffect(() => {
@@ -366,11 +370,22 @@ const App: React.FC = () => {
 
       case AppState.NOTES:
         return (
-          <NotesInterface
-            onDone={handleNotesDone}
-            os={os}
-            performerLink={roomId && roomId !== 'default' && roomId !== 'admin-room' ? `${typeof window !== 'undefined' ? window.location.origin : ''}/${roomId}` : ''}
-          />
+          <>
+            <NotesInterface
+              onDone={handleNotesDone}
+              os={os}
+              performerLink={roomId && roomId !== 'default' && roomId !== 'admin-room' ? `${typeof window !== 'undefined' ? window.location.origin : ''}/${roomId}` : ''}
+              autoSubmitEnabled={userRole === 'PERFORMER' ? autoSubmitSettings.enabled : false}
+              autoSubmitSeconds={autoSubmitSettings.seconds}
+            />
+            {userRole === 'PERFORMER' && (
+              <NotesPerformerSettings
+                enabled={autoSubmitSettings.enabled}
+                seconds={autoSubmitSettings.seconds}
+                onSettingsChange={setAutoSubmitSettings}
+              />
+            )}
+          </>
         );
 
       case AppState.WAITING_FOR_FLIP:
